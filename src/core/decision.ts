@@ -80,6 +80,23 @@ export function chooseAction(
       evidence: [task.lastEvent],
     });
   }
+  // Offers are copied from invitations this agent actually received. They do
+  // not expose the live whereabouts, choices or private knowledge of guests.
+  for (const activity of context.activities || []) {
+    if (!activity.accepted || tick > activity.dueTick) continue;
+    if (tick === activity.dueTick) {
+      options.push({ loc: 4, action: `参加${activity.title}`, kind: "activity_attend", activityId: activity.activityId,
+        base: 30 + n.social * 0.48 + (n.id === activity.organizer ? 24 : 10) + n.ext * 12,
+        reason: "记得自己答应过的活动时间，愿意为共同的兴趣留出一个午后",
+        evidence: [activity.sourceEvent] });
+    } else if (activity.ownPreparation < activity.preparationGoal) {
+      options.push({ loc: 4, action: `筹备${activity.title}`, kind: "activity_prepare", activityId: activity.activityId,
+        base: (n.id === activity.organizer ? 62 : 36) + n.social * 0.2 + n.ext * 10
+          + Math.max(0, 4 - (activity.dueTick - tick)) * 4,
+        reason: n.id === activity.organizer ? "自己发起的小活动需要实际准备，也愿意为它花时间" : "答应过参加，想趁有空帮忙准备一点材料",
+        evidence: [activity.sourceEvent] });
+    }
+  }
   const seen = Object.entries(n.known).flatMap<
     [string, Knowledge & { basis?: string }]
   >(([id, k]) => {
@@ -116,15 +133,15 @@ export function chooseAction(
         evidence: [knowledge.event, ...evidence],
         knownTick: knowledge.tick,
       });
-    } else if (relation.aff < -4 && relation.trust > -25) {
+    } else if (n.beliefs.some((b) => b.subject === target && b.status === "unresolved" && !b.explanationEvent) && relation.trust > -35) {
       options.push({
         loc: knowledge.loc,
         action: "尝试把话说开",
         kind: "repair",
         target,
         base: 24 + n.social * 0.2 + (1 - n.sensitive) * 22 + n.ext * 16,
-        reason: "还记得之前的不愉快，愿意尝试当面澄清",
-        evidence: [knowledge.event, ...evidence],
+        reason: "对之前的事仍有疑问，想找当事人问清原因",
+        evidence: [knowledge.event, ...n.beliefs.filter((b) => b.subject === target && b.status === "unresolved").map((b) => b.sourceEvent), ...evidence],
         knownTick: knowledge.tick,
       });
     }
@@ -154,7 +171,7 @@ export function chooseAction(
       (plan.kind === "appointment"
         ? o.kind === "appointment" && o.target === plan.target
         : o.kind === "task" && o.taskId === plan.taskId);
-    o.commitment = honors ? 26 : 0;
+    o.commitment = honors || o.kind === "activity_attend" ? 26 : 0;
     o.switching = plan && tick >= plan.dueTick && !honors ? 9 : 0;
     o.noise = random() * 12;
     o.score =

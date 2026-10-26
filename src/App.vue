@@ -10,6 +10,8 @@ import CampusWall from "./components/CampusWall.vue";
 import StoryFeed from "./components/StoryFeed.vue";
 import TaskBoard from "./components/TaskBoard.vue";
 import EventDialog from "./components/EventDialog.vue";
+import StoryDeck from "./components/StoryDeck.vue";
+import ActivityBoard from "./components/ActivityBoard.vue";
 const sim = createSimulation();
 const {
   snapshot: world,
@@ -43,7 +45,7 @@ onUnmounted(sim.stop);
   <header class="app-header">
     <a class="brand" href="#"
       ><span>✳</span><b>赛博校园<small>THE CAMPUS OBSERVATORY</small></b></a
-    ><span class="edition">七日观察 / VOL. 003</span
+    ><span class="edition">七日观察 / VOL. 004</span
     ><button class="text-button" @click="helpOpen = true">玩法与机制 ↗</button>
   </header>
   <main>
@@ -163,12 +165,13 @@ onUnmounted(sim.stop);
           <div class="map-caption">
             <span>{{
               world.tick
-                ? `画面记录：${clock(world.tick - 1)} · ${world.npcs.filter((n) => n.intent).length} 人主动寻找熟人`
+                ? `画面记录：${clock(world.tick - 1)} · ${world.npcs.filter((n) => n.intent).length} 人正为具体的事行动`
                 : "新的一周，大家正在整理开学行李。"
             }}</span
             ><span id="count">{{ world.tick }} / 28 时段</span>
           </div>
         </section>
+        <StoryDeck :world="world" :watched="view.watched" @event="detailId = $event" @select="sim.select" />
         <section class="panel intervention">
           <div class="panelhead">
             <h2>轻轻拨动世界 <small>A LITTLE NUDGE</small></h2>
@@ -210,6 +213,7 @@ onUnmounted(sim.stop);
           </div>
           <p id="notice" role="status">{{ notice }}</p>
         </section>
+        <ActivityBoard :world="world" @event="detailId = $event" />
         <TaskBoard :world="world" @event="detailId = $event" />
         <div class="observation-grid">
           <RelationshipGraph

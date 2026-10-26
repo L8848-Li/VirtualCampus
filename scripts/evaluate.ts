@@ -18,12 +18,15 @@ const report = {
     taskCompletionRate: "completed reports / all reports",
     interventionChangedWorldRate:
       "final positions/relationships differ from the no-intervention control; RNG cascades may contribute",
+    beliefRevisionRate: "revised personal interpretations / all sourced personal interpretations; an explanation is not guaranteed to be accepted",
+    beliefSourceErrors: "interpretations whose source event is missing or was not experienced by the owner; must be zero",
+    activityFulfillmentRate: "held NPC-organized gatherings / proposed gatherings; requires preparation and actual attendance",
   },
   metrics,
 };
 fs.mkdirSync("docs/reports", { recursive: true });
 fs.writeFileSync(
-  "docs/reports/behavior-v03.json",
+  "docs/reports/behavior-v04.json",
   JSON.stringify(report, null, 2) + "\n",
 );
 console.table(
@@ -31,4 +34,4 @@ console.table(
     Object.entries(metrics).filter(([key]) => key !== "eventTypes"),
   ),
 );
-console.log("Saved docs/reports/behavior-v03.json");
+console.log("Saved docs/reports/behavior-v04.json");

@@ -33,6 +33,17 @@ export const labels: Record<EventType, string> = {
   task_progress: "一起整理",
   task_completed: "共同完成",
   task_expired: "截止了",
+  brief_reply: "一句短答",
+  belief_formed: "心里的猜测",
+  explanation: "当面解释",
+  belief_revised: "仍有疑虑",
+  activity_proposed: "一个小愿望",
+  activity_invited: "邀请伙伴",
+  activity_accepted: "答应参加",
+  activity_declined: "这次不参加",
+  activity_progress: "认真筹备",
+  activity_held: "小聚办成了",
+  activity_cancelled: "这次没办成",
 };
 export const relationLabel = (r: Relation) =>
   r.crush > 0
@@ -79,6 +90,17 @@ export function filterEvents(
             "task_progress",
             "task_completed",
             "task_expired",
+            "brief_reply",
+            "belief_formed",
+            "explanation",
+            "belief_revised",
+            "activity_proposed",
+            "activity_invited",
+            "activity_accepted",
+            "activity_declined",
+            "activity_progress",
+            "activity_held",
+            "activity_cancelled",
           ].includes(e.type)),
     )
     .slice()

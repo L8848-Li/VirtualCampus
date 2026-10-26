@@ -12,6 +12,14 @@ export interface QualityMetrics {
   planFulfillmentRate: number;
   taskCompletionRate: number;
   interventionChangedWorldRate: number;
+  beliefsFormed: number;
+  beliefsRevised: number;
+  beliefRevisionRate: number;
+  beliefSourceErrors: number;
+  activitiesProposed: number;
+  activitiesHeld: number;
+  activitiesCancelled: number;
+  activityFulfillmentRate: number;
   eventTypes: Record<string, number>;
 }
 const round = (n: number) => Math.round(n * 1000) / 1000;
@@ -31,7 +39,13 @@ export function evaluateSeeds(seeds: number = 100): QualityMetrics {
     plansAgreed = 0,
     plansFulfilled = 0,
     completedTasks = 0,
-    changed = 0;
+    changed = 0,
+    beliefsFormed = 0,
+    beliefsRevised = 0,
+    beliefSourceErrors = 0,
+    activitiesProposed = 0,
+    activitiesHeld = 0,
+    activitiesCancelled = 0;
   const eventTypes: Record<string, number> = {};
   for (let seed = 0; seed < seeds; seed++) {
     const w = new World(`quality-${seed}`),
@@ -87,6 +101,14 @@ export function evaluateSeeds(seeds: number = 100): QualityMetrics {
     plansAgreed += agreedIds.size;
     plansFulfilled += fulfilledIds.size;
     completedTasks += w.tasks.filter((t) => t.status === "completed").length;
+    for (const n of w.npcs) for (const belief of n.beliefs) {
+      beliefsFormed++;
+      if (belief.status === "revised") beliefsRevised++;
+      if (!w.events[belief.sourceEvent - 1]?.people.includes(n.id)) beliefSourceErrors++;
+    }
+    activitiesProposed += w.activities.length;
+    activitiesHeld += w.activities.filter((a) => a.status === "held").length;
+    activitiesCancelled += w.activities.filter((a) => a.status === "cancelled").length;
     const control = new World(`quality-${seed}`);
     while (control.step());
     if (
@@ -108,6 +130,14 @@ export function evaluateSeeds(seeds: number = 100): QualityMetrics {
     planFulfillmentRate: round(plansFulfilled / Math.max(1, plansAgreed)),
     taskCompletionRate: round(completedTasks / (seeds * 3)),
     interventionChangedWorldRate: round(changed / seeds),
+    beliefsFormed,
+    beliefsRevised,
+    beliefRevisionRate: round(beliefsRevised / Math.max(1, beliefsFormed)),
+    beliefSourceErrors,
+    activitiesProposed,
+    activitiesHeld,
+    activitiesCancelled,
+    activityFulfillmentRate: round(activitiesHeld / Math.max(1, activitiesProposed)),
     eventTypes,
   };
 }

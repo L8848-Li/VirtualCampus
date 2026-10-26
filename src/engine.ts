@@ -4,6 +4,7 @@ import * as config from "./core/config.ts";
 import { Random, hash } from "./core/random.ts";
 import { chooseAction, clamp } from "./core/decision.ts";
 import { runSocial } from "./core/social.ts";
+import { workActivities, resolveActivities } from "./core/activities.ts";
 import type {
   AgentState,
   CampusEvent,
@@ -14,6 +15,7 @@ import type {
   LocationId,
   SaveData,
   CampusTask,
+  CampusActivity,
 } from "./core/types.ts";
 const {
   ENGINE_VERSION,
@@ -37,6 +39,7 @@ export class World {
   declare groups: number[];
   declare party: number;
   declare tasks: CampusTask[];
+  declare activities: CampusActivity[];
   declare environment: Record<InterventionKind, number | null>;
   declare npcs: AgentState[];
   constructor(seed: string | number = "campus-2026") {
@@ -52,6 +55,7 @@ export class World {
     this.groups = Array.from({ length: 10 }, (_, i) => i % 3);
     this.party = -1;
     this.environment = { rooms: null, groups: null, party: null };
+    this.activities = [];
     this.npcs = profiles.map<AgentState>((p, id) => ({
       id,
       name: p.name,
@@ -80,6 +84,9 @@ export class World {
       last: null,
       plan: null,
       lastPlanTick: -9,
+      beliefs: [],
+      accounts: [],
+      activityInvitations: [],
     }));
     this.log(
       "开学了。十个人带着各自的习惯，走进了同一座校园。",
@@ -93,6 +100,9 @@ export class World {
   }
   rand() {
     return this.random.next();
+  }
+  sample(purpose: string, ...keys: (number | string)[]) {
+    return new Random(JSON.stringify([this.seed, purpose, ...keys])).next();
   }
   shuffle<T>(a: T[]) {
     for (let i = a.length - 1; i > 0; i--) {
@@ -222,6 +232,8 @@ export class World {
           slot: this.tick % 4,
           party: this.party === this.tick,
           tasks: this.tasks.filter((t) => t.members.includes(n.id)),
+          activities: n.activityInvitations.map((invitation) => ({ ...invitation,
+            ownPreparation: this.activities.find((a) => a.id === invitation.activityId)?.contributions[n.id] || 0 })),
           memories: n.memory.map((id) => this.events[id - 1]),
           roommates: this.npcs
             .filter((p) => this.rooms[p.id] === this.rooms[n.id])
@@ -242,10 +254,11 @@ export class World {
             this,
             n,
             "cancelled",
-            "新的需求超过了当前承诺，暂时改了安排",
+            `想先${chosen.action}：${chosen.reason}`,
           );
       }
       if (chosen.kind === "task" && !active(n.plan)) {
+        const planId = `work-${this.tick}-${n.id}`;
         const id = this.log(
           `${n.name}给自己留出了两个时段，想把小组资料整理得更完整。`,
           "plan_started",
@@ -254,12 +267,13 @@ export class World {
           {
             reason: "根据自己的目标自主开始短期计划，饥饿或疲劳仍可中断",
             taskId: chosen.taskId,
+            planId,
           },
           3,
         );
         this.remember(n, id);
         n.plan = {
-          id: `work-${this.tick}-${n.id}`,
+          id: planId,
           kind: "task",
           taskId: chosen.taskId,
           location: chosen.loc,
@@ -282,6 +296,7 @@ export class World {
             kind: chosen.kind,
             target: chosen.target,
             taskId: chosen.taskId,
+            activityId: chosen.activityId,
             evidence: chosen.evidence,
           }
         : null;
@@ -296,6 +311,10 @@ export class World {
         [n.last, ...chosen.evidence, ...this.environmentParents(n.loc)],
         {
           reason: chosen.reason,
+          taskId: chosen.taskId,
+          activityId: chosen.activityId,
+          planId: n.plan && ((chosen.kind === "appointment" && n.plan.kind === "appointment") ||
+            (chosen.kind === "task" && n.plan.taskId === chosen.taskId)) ? n.plan.id : undefined,
           target: chosen.target ?? null,
           location: n.loc,
           observedPeople: [],
@@ -340,6 +359,8 @@ export class World {
         }
       }
     workTasks(this);
+    workActivities(this);
+    resolveActivities(this);
     runSocial(this);
     this.tick++;
     if (this.tick % 4 === 0) this.summarize();
@@ -359,6 +380,10 @@ export class World {
           "task_completed",
           "task_expired",
           "plan_fulfilled",
+          "activity_proposed",
+          "activity_held",
+          "activity_cancelled",
+          "explanation",
         ].includes(e.type),
     );
     const pairs = new Set<string>(),
@@ -387,6 +412,8 @@ export class World {
         (e) =>
           e.type === "plan_fulfilled" && e.data.planId?.startsWith("meal-"),
       ).length,
+      activitiesHeld: stories.filter((e) => e.type === "activity_held").length,
+      explanations: stories.filter((e) => e.type === "explanation").length,
       crushes: stories.filter((e) => e.type === "crush").length,
       misunderstandings: stories.filter((e) => e.type === "misunderstanding")
         .length,
@@ -437,7 +464,7 @@ export class World {
       typeof save !== "object" ||
       save.schemaVersion !== SCHEMA_VERSION
     )
-      throw new Error("存档格式不兼容，请使用 v0.3 导出的记录。");
+      throw new Error(`存档格式不兼容，请使用 v${ENGINE_VERSION} 导出的记录。`);
     if (save.engineVersion !== ENGINE_VERSION)
       throw new Error(
         `存档来自引擎 ${String(save.engineVersion).slice(0, 24)}，当前为 ${ENGINE_VERSION}，暂不支持跨版本重放。`,

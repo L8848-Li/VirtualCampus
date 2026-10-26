@@ -142,7 +142,7 @@ export const profiles: Profile[] = [
   },
 ];
 
-export const ENGINE_VERSION = "0.3.0";
+export const ENGINE_VERSION = "0.4.0";
 export const SCHEMA_VERSION = 3;
 export const TOTAL_TICKS = 28;
 export const MAX_INPUTS = 256;

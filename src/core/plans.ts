@@ -1,6 +1,7 @@
 import type { AgentPlan, AgentState, PlanStage } from "./types.ts";
 import type { World } from "../engine.ts";
-import { invitationDecision } from "./social.ts";
+import { invitationDecision } from "./invitations.ts";
+import { noteAbsence } from "./cognition.ts";
 export function active(plan: AgentPlan | null | undefined): plan is AgentPlan {
   return !!plan && ["pending", "waiting", "working"].includes(plan.stage);
 }
@@ -38,6 +39,12 @@ export function finishPlan(
   );
   plan.lastEvent = id;
   world.remember(n, id);
+  if (plan.kind === "appointment" && stage !== "fulfilled") {
+    n.accounts.push({ kind: "absence", sourceEvent: id, planId: plan.id,
+      text: stage === "cancelled" ? reason : plan.attempts > 0 ? "我也试着去了食堂，但这次没能碰上" : "没能按约定到场，之后也错过了时间",
+      evidence: [id] });
+    if (stage === "expired" && plan.attempts > 0) noteAbsence(world, n, plan, id);
+  }
 }
 export function preparePlans(world: World) {
   for (const n of world.npcs) {
@@ -101,6 +108,7 @@ export function proposeAppointment(
   if (due >= 28) return;
   a.lastPlanTick = world.tick;
   b.lastPlanTick = world.tick;
+  const planId = `meal-${world.tick}-${a.id}-${b.id}`;
   const proposal = world.log(
     `${a.name}问${b.name}，要不要在第 ${Math.floor(due / 4) + 1} 天午间一起吃饭。`,
     "plan_proposed",
@@ -110,6 +118,7 @@ export function proposeAppointment(
       reason: "几次正向相处后，主动把期待变成下一顿饭的具体约定",
       dueTick: due,
       location: 2,
+      planId,
     },
     3,
   );
@@ -122,7 +131,6 @@ export function proposeAppointment(
     hunger: Math.min(60, b.hunger),
   };
   const response = invitationDecision(anticipated, a.id, () => world.rand());
-  const planId = `meal-${world.tick}-${a.id}-${b.id}`;
   const agreed = world.log(
     response.accepted
       ? `${b.name}答应了。两人记下了午间在食堂见面的约定。`

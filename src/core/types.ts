@@ -25,7 +25,18 @@ export type EventType =
   | "task_announced"
   | "task_progress"
   | "task_completed"
-  | "task_expired";
+  | "task_expired"
+  | "brief_reply"
+  | "belief_formed"
+  | "explanation"
+  | "belief_revised"
+  | "activity_proposed"
+  | "activity_invited"
+  | "activity_accepted"
+  | "activity_declined"
+  | "activity_progress"
+  | "activity_held"
+  | "activity_cancelled";
 export interface Profile {
   name: string;
   role: string;
@@ -55,9 +66,10 @@ export interface Knowledge extends Sighting {
   routine?: Partial<Record<number, Sighting>>;
 }
 export interface Intent {
-  kind: "seek" | "repair" | "appointment" | "task";
+  kind: "seek" | "repair" | "appointment" | "task" | "activity_prepare" | "activity_attend";
   target?: number;
   taskId?: string;
+  activityId?: string;
   evidence: number[];
 }
 export interface AgentState {
@@ -88,15 +100,19 @@ export interface AgentState {
   last: number | null;
   plan: AgentPlan | null;
   lastPlanTick: number;
+  beliefs: Belief[];
+  accounts: PersonalAccount[];
+  activityInvitations: ActivityInvitation[];
 }
 export interface ActionOption {
   loc: LocationId;
   action: string;
   base: number;
   reason: string;
-  kind?: "seek" | "repair" | "appointment" | "task";
+  kind?: Intent["kind"];
   target?: number;
   taskId?: string;
+  activityId?: string;
   evidence?: number[];
   knownTick?: number;
   habit?: number;
@@ -140,12 +156,20 @@ export interface DayCounts {
   invitations: number;
   tasksCompleted?: number;
   plansFulfilled?: number;
+  activitiesHeld?: number;
+  explanations?: number;
 }
 export interface EventData {
   reason?: string;
   dueTick?: number;
   planId?: string;
   taskId?: string;
+  activityId?: string;
+  beliefId?: string;
+  sourceEvent?: number;
+  claim?: string;
+  confidence?: number;
+  previousConfidence?: number;
   progress?: number;
   required?: number;
   scores?: ActionScore[];
@@ -180,6 +204,7 @@ export interface DecisionContext {
   memories: CampusEvent[];
   roommates: number[];
   tasks?: CampusTask[];
+  activities?: ActivityOffer[];
 }
 export interface Intervention {
   tick: number;
@@ -204,6 +229,7 @@ export interface WorldSnapshot {
   party: number;
   inputs: Intervention[];
   tasks: CampusTask[];
+  activities: CampusActivity[];
 }
 export type EventFilter =
   | "important"
@@ -251,4 +277,62 @@ export interface CampusTask {
   status: "open" | "completed" | "expired";
   lastEvent: number;
   contributions: Record<number, number>;
+}
+
+export interface Belief {
+  id: string;
+  kind: "absence" | "brief_reply";
+  subject: number;
+  claim: string;
+  confidence: number;
+  status: "unresolved" | "revised";
+  sourceEvent: number;
+  evidence: number[];
+  planId?: string;
+  taskId?: string;
+  activityId?: string;
+  createdTick: number;
+  updatedTick: number;
+  explanationEvent?: number;
+  resolution?: string;
+}
+
+// Only the owner may turn a private account into a spoken explanation.
+export interface PersonalAccount {
+  kind: Belief["kind"];
+  sourceEvent: number;
+  planId?: string;
+  text: string;
+  evidence: number[];
+}
+
+export interface ActivityInvitation {
+  activityId: string;
+  title: string;
+  organizer: number;
+  dueTick: number;
+  accepted: boolean;
+  sourceEvent: number;
+  preparationGoal: number;
+}
+
+export interface ActivityOffer extends ActivityInvitation {
+  ownPreparation: number;
+}
+
+export interface CampusActivity {
+  id: string;
+  title: string;
+  organizer: number;
+  createdTick: number;
+  dueTick: number;
+  location: LocationId;
+  status: "preparing" | "held" | "cancelled";
+  progress: number;
+  required: number;
+  invited: number[];
+  members: number[];
+  attendees: number[];
+  contributions: Record<number, number>;
+  lastEvent: number;
 }

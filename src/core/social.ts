@@ -1,6 +1,8 @@
 import { invitationDecision } from "./invitations.ts";
 export { invitationDecision } from "./invitations.ts";
 import { proposeAppointment, resolveAppointment } from "./plans.ts";
+import { briefReply, explainBelief } from "./cognition.ts";
+import { considerActivity } from "./activities.ts";
 import type { AgentState, EventType } from "./types.ts";
 import type { World } from "../engine.ts";
 const clamp = (v: number, min = 0) => Math.max(min, Math.min(100, v));
@@ -12,56 +14,36 @@ const contexts = [
   "活动海报的准备",
 ];
 
-function resolve(world: World, a: AgentState, b: AgentState, invited = false) {
+function resolve(world: World, a: AgentState, b: AgentState, invited = false, planId?: string) {
   const r = a.rel[b.id],
     s = b.rel[a.id];
   const memory = a.memory
     .map((id) => world.events[id - 1])
     .filter((e) => e.people.includes(b.id));
-  const missed = memory
-    .filter((e) => e.type === "plan_expired" && e.data.target === b.id)
-    .sort((x, y) => y.id - x.id)[0];
-  const lastRepair = memory
-    .filter((e) => e.type === "repair")
-    .sort((x, y) => y.id - x.id)[0];
-  const unresolvedMiss =
-    missed && (!lastRepair || missed.id > lastRepair.id) ? missed : undefined;
-  const negative =
-    memory.filter((e) => e.type === "misunderstanding").length +
-    (unresolvedMiss ? 1 : 0);
-  const chance = 0.09 + a.sensitive * 0.17 + negative * 0.04;
+  if (explainBelief(world, a, b) || explainBelief(world, b, a)) {
+    a.social = clamp(a.social - 18);
+    b.social = clamp(b.social - 18);
+    return;
+  }
   const roll = world.rand();
   const task = world.tasks.find(
     (t) => t.id === a.intent?.taskId || t.id === b.intent?.taskId,
   );
-  const topic = task ? `“${task.title}”的资料分工` : contexts[a.loc];
+  const activity = world.activities.find((t) => t.id === a.intent?.activityId || t.id === b.intent?.activityId);
+  const topic = task ? `“${task.title}”的资料分工` : activity ? `“${activity.title}”里的兴趣交流` : contexts[a.loc];
+  const belief = briefReply(world, a, b, topic, { planId, taskId: task?.id, activityId: activity?.id });
   let type: EventType, delta: number, text: string, reason: string;
   let perspectives: { person: number; interpretation: string }[] = [];
-  if (
-    (r.aff < 0 ||
-      a.intent?.kind === "repair" ||
-      (unresolvedMiss && r.trust < 10)) &&
-    roll > 0.32
-  ) {
-    type = "repair";
-    delta = 10;
-    text = unresolvedMiss
-      ? `${a.name}与${b.name}重新聊起上次没碰上的饭约，终于有机会当面解释。`
-      : `${a.name}与${b.name}聊起${topic}，把上次没说清的意思重新解释了一遍。`;
-    reason = "双方再次当面相遇，旧的紧张关系获得澄清机会";
-  } else if (roll < chance) {
+  if (belief) {
     type = "misunderstanding";
     delta = -8;
-    text = `${a.name}在${topic}时，把${b.name}的简短回应理解成了冷淡。`;
-    reason = `亲历的负面记忆与敏感度使误读概率达到 ${Math.round(chance * 100)}%`;
+    text = `${a.name}在聊起${topic}时，把${b.name}的简短回应理解成了冷淡。`;
+    reason = "确实听到了简短回应，但不知道背后的原因；按自己的敏感度和信任形成了可能有误的判断";
     perspectives = [
       { person: a.id, interpretation: "对方好像不太想理我" },
       {
         person: b.id,
-        interpretation:
-          b.energy < 40
-            ? "只是有些累，没来得及多解释"
-            : "只是简短地回应了眼前这件事",
+        interpretation: "当时只做了简短回应，还不知道对方把它理解成了冷淡",
       },
     ];
   } else if (
@@ -94,49 +76,53 @@ function resolve(world: World, a: AgentState, b: AgentState, invited = false) {
       : 0;
   const firstFriend = r.aff <= 0 && delta > 0;
   r.aff = clamp(r.aff + delta + bonus, -100);
-  s.aff = clamp(
-    s.aff + (type === "misunderstanding" ? -2 : delta + bonus),
-    -100,
-  );
+  if (!belief) s.aff = clamp(s.aff + delta + bonus, -100);
   r.trust = clamp(r.trust + (delta > 0 ? 4 : -5), -100);
-  s.trust = clamp(s.trust + (delta > 0 ? 3 : -2), -100);
+  if (!belief) s.trust = clamp(s.trust + (delta > 0 ? 3 : -2), -100);
   a.social = clamp(a.social - 27);
   b.social = clamp(b.social - 24);
-  a.interaction = b.interaction =
+  a.interaction =
     type === "misunderstanding"
       ? "气氛有点尴尬"
-      : type === "repair"
-        ? "把话说开了"
-        : "正在一起相处";
+      : "正在一起相处";
+  b.interaction = belief ? "简短回应后，继续自己的安排" : a.interaction;
   const parents = [
     a.last,
     b.last,
-    unresolvedMiss?.id,
+    belief?.sourceEvent,
     ...memory.slice(0, 2).map((e) => e.id),
     ...world.environmentParents(a.loc),
   ];
   const id = world.log(
     text,
     type,
-    [a.id, b.id],
+    belief ? [a.id] : [a.id, b.id],
     parents,
     {
       reason,
       delta: delta + bonus,
-      otherDelta: type === "misunderstanding" ? -2 : delta + bonus,
+      otherDelta: belief ? 0 : delta + bonus,
       roll,
-      probability: chance,
+      beliefId: belief?.id,
+      sourceEvent: belief?.sourceEvent,
+      claim: belief?.claim,
+      confidence: belief?.confidence,
+      planId,
       location: a.loc,
       topic,
       taskId: task?.id,
+      activityId: activity?.id,
       perspectives,
     },
     type === "friendship" ? (firstFriend ? 3 : 2) : 4,
   );
   world.remember(a, id);
-  world.remember(b, id);
-  if (type === "friendship" || type === "crush")
+  if (belief) belief.evidence.push(id);
+  else world.remember(b, id);
+  if (type === "friendship" || type === "crush") {
     proposeAppointment(world, a, b, id);
+    considerActivity(world, a, b, id);
+  }
 }
 export function runSocial(world: World) {
   const paired = new Set();
@@ -163,7 +149,7 @@ export function runSocial(world: World) {
       paired.add(a.id);
       if (met) {
         paired.add(b.id);
-        resolve(world, a, b, true);
+        resolve(world, a, b, true, a.plan?.id);
       }
       continue;
     }

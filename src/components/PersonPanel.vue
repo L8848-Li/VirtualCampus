@@ -37,6 +37,8 @@ const observations = computed(() =>
     ([, k]) => props.world.tick - k.tick <= 4,
   ),
 );
+const beliefs = computed(() => [...n.value.beliefs].sort((a, b) =>
+  Number(a.status === 'revised') - Number(b.status === 'revised') || b.updatedTick - a.updatedTick).slice(0, 3));
 </script>
 <template>
   <aside class="panel person-panel">
@@ -140,6 +142,13 @@ const observations = computed(() =>
         ><small>{{ relationLabel(r) }}</small
         ><b>{{ r.aff > 0 ? "+" : "" }}{{ r.aff }}</b>
       </button>
+      <template v-if="beliefs.length">
+        <h4>TA 心里的理解 <small>可能有误，也会改变</small></h4>
+        <button v-for="belief in beliefs" :key="belief.id" class="memory belief-memory" @click="$emit('event', belief.evidence.at(-1) || belief.sourceEvent)">
+          <small>{{ belief.status === 'revised' ? '重新理解' : '仍有疑问' }} · {{ clock(belief.updatedTick) }}</small>
+          <span>{{ belief.resolution || belief.claim }}</span>
+        </button>
+      </template>
       <h4>记得的片段 <small>按重要程度保留 · 最多 8 条</small></h4>
       <div class="memory-list">
         <button

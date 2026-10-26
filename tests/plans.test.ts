@@ -157,7 +157,8 @@ test("multi-seed behavioral quality stays within broad playable ranges", () => {
   assert(q.activityDiversity >= 5);
   assert(q.fourStepRepeatRate < 0.05);
   assert(q.crisisRate < 0.03);
-  assert(q.misunderstandingRate > 0.03 && q.misunderstandingRate < 0.4);
+  // Conflicts now require concrete observations; do not impose a drama quota.
+  assert(q.misunderstandingRate > 0 && q.misunderstandingRate < 0.4);
   assert(
     q.invitationAcceptanceRate > 0.05 && q.invitationAcceptanceRate < 0.99,
   );
@@ -165,6 +166,11 @@ test("multi-seed behavioral quality stays within broad playable ranges", () => {
   assert(q.plansAgreed > 0);
   assert(q.planFulfillmentRate > 0.25 && q.planFulfillmentRate < 0.99);
   assert(q.interventionChangedWorldRate > 0.5);
+  assert(q.beliefsFormed > 0);
+  assert.equal(q.beliefSourceErrors, 0);
+  assert(q.beliefsRevised > 0 && q.beliefsRevised < q.beliefsFormed);
+  assert(q.activitiesProposed > 0);
+  assert(q.activitiesHeld > 0 && q.activitiesCancelled > 0);
 });
 
 test("hunger reinforces a meal appointment instead of wrongly cancelling it", () => {

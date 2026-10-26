@@ -36,11 +36,13 @@ watch(
           角色依据自身需求、习惯、关系和亲历信息做选择。寻找可能扑空，邀约也可能被拒绝。
         </p>
         <p>
-          角色会记住自己答应的饭约，也可以因紧急需求改变安排；小组报告按实际工作推进，有截止时间。改变宿舍、课程分组或举办开放日，会改变相遇条件。每天结束自动留下代表片段，为什么发生可追溯规则与历史。
+          在“那些还惦记着的事”展开一个约定，能分清确实发生的事与各人的猜测。人物可能因短暂的回应或失约产生疑问，只有实际交流才能听到当事人的解释，也可能仍然不信。
         </p>
         <p>
-          每次推进与干预都会本机保存。导入会重跑校验后暂停恢复。开发需安装依赖，游玩无需模型密钥。v0.3
-          存档暂不兼容旧版。
+          有人会在正向相处后自主发起兴趣小聚，邀请伙伴、准备材料。答应参加的人仍需自己腾出时间；准备不足或没有到场，活动也会落空。小组报告与饭约同样按实际行动推进。
+        </p>
+        <p>
+          每次推进与干预都会本机保存。导入会校验后暂停恢复，游玩无需模型密钥。v0.4 使用独立存档空间，保留旧版本机记录，暂不支持跨版本导入。
         </p></template
       ><template v-else-if="event"
         ><span class="eyebrow"
@@ -55,6 +57,7 @@ watch(
         <p class="event-quote">{{ event.text }}</p>
         <h4>为什么发生</h4>
         <p>{{ event.data.reason || "世界初始化、环境变化或日终汇总。" }}</p>
+        <div v-if="event.data.claim" class="event-belief"><h4>人物的判断 · 尚需和事实区分</h4><p>{{ event.data.claim }}</p><p v-if="event.data.confidence !== undefined">当时对这份猜测的确信程度：{{ Math.round(event.data.confidence * 100) }}%</p></div>
         <p v-if="event.data.delta !== undefined" class="change-pill">
           发起者好感 {{ event.data.delta > 0 ? "+" : ""
           }}{{ event.data.delta }} · 对方好感

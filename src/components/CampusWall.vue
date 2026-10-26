@@ -13,7 +13,7 @@ const summaries = computed(() =>
 <template>
   <section class="panel wall-panel">
     <div class="panelhead">
-      <h2>校园墙 <small>DAY BY DAY</small></h2>
+      <h2>校园手记 <small>DAY BY DAY</small></h2>
       <span>每日片段</span>
     </div>
     <div id="wall">
@@ -35,7 +35,8 @@ const summaries = computed(() =>
           {{ e.data.counts?.invitations }} 次邀约 ·
           {{ e.data.counts?.crushes }} 次心动 ·
           {{ e.data.counts?.plansFulfilled || 0 }} 次兑现 ·
-          {{ e.data.counts?.tasksCompleted || 0 }} 份报告完成
+          {{ e.data.counts?.tasksCompleted || 0 }} 份报告完成 ·
+          {{ e.data.counts?.activitiesHeld || 0 }} 场小聚
         </p>
         <button
           v-for="id in e.parents"

@@ -1,7 +1,7 @@
 import { computed, reactive, ref, shallowRef } from "vue";
 import { World, TOTAL_TICKS, MAX_INPUTS } from "../engine.ts";
 import type { WorldSnapshot, ViewState } from "../core/types.ts";
-const STORAGE_KEY = "virtualcampus.save.v3";
+const STORAGE_KEY = "virtualcampus.save.v4";
 const isId = (id: unknown): id is number =>
   Number.isInteger(id) && Number(id) >= 0 && Number(id) < 10;
 export function createSimulation() {
@@ -20,6 +20,7 @@ export function createSimulation() {
         party: world.party,
         inputs: world.inputs,
         tasks: world.tasks,
+        activities: world.activities,
       }),
     );
   const snapshot = shallowRef(capture());
