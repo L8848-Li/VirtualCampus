@@ -1,288 +1,364 @@
 (function (root) {
-  const names = [
-    "林夏",
-    "周屿",
-    "陈默",
-    "许知遥",
-    "沈星",
-    "陆川",
-    "苏棠",
-    "江野",
-    "温言",
-    "顾北",
-  ];
-  const places = ["宿舍", "教学楼", "食堂", "图书馆", "社团中心"];
-  const slots = ["清晨", "午间", "午后", "夜晚"];
+  const node = typeof module !== "undefined";
+  const config = node ? require("./sim/config.js") : root.CampusConfig;
+  const { Random, hash } = node
+    ? require("./sim/random.js")
+    : root.CampusRandom;
+  const { chooseAction, clamp } = node
+    ? require("./sim/decision.js")
+    : root.CampusDecision;
+  const { runSocial } = node ? require("./sim/social.js") : root.CampusSocial;
+  const {
+    ENGINE_VERSION,
+    SCHEMA_VERSION,
+    TOTAL_TICKS,
+    MAX_INPUTS,
+    profiles,
+    places,
+  } = config;
+  const kinds = ["rooms", "groups", "party"];
   class World {
     constructor(seed = "campus-2026") {
+      this.version = ENGINE_VERSION;
       this.seed = String(seed);
-      this.rng = 2166136261;
-      for (const c of this.seed)
-        this.rng = Math.imul(this.rng ^ c.charCodeAt(0), 16777619) >>> 0;
+      if (!this.seed.length || this.seed.length > 128)
+        throw new Error("世界种子应为 1–128 个字符。");
+      this.random = new Random(this.seed);
       this.tick = 0;
       this.events = [];
       this.inputs = [];
       this.rooms = Array.from({ length: 10 }, (_, i) => Math.floor(i / 2));
       this.groups = Array.from({ length: 10 }, (_, i) => i % 3);
       this.party = -1;
-      this.npcs = names.map((name, id) => ({
+      this.environment = { rooms: null, groups: null, party: null };
+      this.npcs = profiles.map((p, id) => ({
         id,
-        name,
-        ext: this.rand(),
-        sensitive: this.rand(),
-        ambition: this.rand(),
-        goal: ["结交朋友", "争取奖学金", "寻找归属"][id % 3],
+        name: p.name,
+        role: p.role,
+        interest: p.interest,
+        quirk: p.quirk,
+        home: p.home,
+        habit: p.habit,
+        goal: p.goal,
+        ext: clamp(p.ext + (this.rand() - 0.5) * 0.18, 0, 1),
+        sensitive: clamp(p.sensitive + (this.rand() - 0.5) * 0.18, 0, 1),
+        ambition: clamp(p.ambition + (this.rand() - 0.5) * 0.18, 0, 1),
         energy: 65 + this.rand() * 25,
         hunger: 20 + this.rand() * 25,
         social: 25 + this.rand() * 35,
         progress: 0,
         loc: 0,
-        action: "刚刚醒来",
-        why: "新的一周开始了",
+        previousLoc: 0,
+        action: "整理开学行李",
+        why: "新的一周，先熟悉校园",
+        interaction: "还没有新的相遇",
+        intent: null,
         memory: [],
+        known: {},
         rel: Array.from({ length: 10 }, () => ({ aff: 0, trust: 0, crush: 0 })),
         last: null,
       }));
-      this.log("开学了。十个人的七天，开始交织。", "system", [], [], {
-        seed: this.seed,
-      });
+      this.log(
+        "开学了。十个人带着各自的习惯，走进了同一座校园。",
+        "system",
+        [],
+        [],
+        { seed: this.seed, engineVersion: ENGINE_VERSION },
+        1,
+      );
     }
     rand() {
-      this.rng = (this.rng + 0x6d2b79f5) >>> 0;
-      let t = this.rng;
-      t = Math.imul(t ^ (t >>> 15), t | 1);
-      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      return this.random.next();
     }
-    log(text, type, people = [], parents = [], data = {}) {
-      let e = {
-        id: this.events.length + 1,
+    shuffle(a) {
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(this.rand() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    log(text, type, people = [], parents = [], data = {}, importance = 1) {
+      const id = this.events.length + 1;
+      this.events.push({
+        id,
         tick: this.tick,
         text,
         type,
         people,
-        parents: parents.filter(Boolean),
+        parents: [
+          ...new Set(
+            parents.filter((p) => Number.isInteger(p) && p > 0 && p < id),
+          ),
+        ],
         data,
-      };
-      this.events.push(e);
-      return e.id;
+        importance,
+      });
+      return id;
     }
     remember(n, id) {
-      n.memory.unshift(id);
-      n.memory = n.memory.slice(0, 8);
       n.last = id;
+      const score = (eventId) => {
+        const e = this.events[eventId - 1];
+        return e.importance - (this.tick - e.tick) * 0.16;
+      };
+      n.memory = [...new Set([id, ...n.memory])]
+        .sort((a, b) => score(b) - score(a) || b - a)
+        .slice(0, 8);
     }
-    intervene(kind, record = true) {
-      if (this.tick >= 28) return false;
-      if (record) this.inputs.push({ tick: this.tick, kind });
+    environmentParents(loc) {
+      return [
+        loc === 0 ? this.environment.rooms : null,
+        loc === 1 ? this.environment.groups : null,
+        loc === 4 && this.party === this.tick ? this.environment.party : null,
+      ].filter(Boolean);
+    }
+    intervene(kind) {
+      if (
+        this.tick >= TOTAL_TICKS ||
+        !kinds.includes(kind) ||
+        this.inputs.length >= MAX_INPUTS
+      )
+        return false;
+      this.inputs.push({ tick: this.tick, kind });
       let text;
       if (kind === "rooms") {
         this.rooms = this.shuffle(
           Array.from({ length: 10 }, (_, i) => Math.floor(i / 2)),
         );
-        text = "宿舍重新分配：新的室友将改变夜间相遇机会。";
-      } else if (kind === "groups") {
-        this.groups = this.shuffle(Array.from({ length: 10 }, (_, i) => i % 3));
-        text = "课程随机分组：新的小组将影响下次课堂合作。";
-      } else if (kind === "party") {
-        this.party = this.tick;
-        text = "社团开放日：下一时段，社团中心对所有人开放。";
-      } else return false;
-      this.envEvent = this.log(text, "intervention", [], [], {
-        kind,
-        rooms: [...this.rooms],
-        groups: [...this.groups],
-      });
-      return true;
-    }
-    shuffle(a) {
-      for (let i = a.length - 1; i > 0; i--) {
-        let j = Math.floor(this.rand() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
+        text = "宿舍重排：新的室友改变了回宿舍后的相遇机会。";
       }
-      return a;
+      if (kind === "groups") {
+        this.groups = this.shuffle(Array.from({ length: 10 }, (_, i) => i % 3));
+        text = "课程分组更新：一起完成课堂任务的人发生了变化。";
+      }
+      if (kind === "party") {
+        this.party = this.tick;
+        text = "社团开放日已准备好，下一时段大家可以自主决定是否参加。";
+      }
+      this.environment[kind] = this.log(
+        text,
+        "intervention",
+        [],
+        [this.environment[kind]],
+        { kind, rooms: [...this.rooms], groups: [...this.groups] },
+        3,
+      );
+      return true;
     }
     step() {
-      if (this.tick >= 28) return false;
-      const slot = this.tick % 4;
+      if (this.tick >= TOTAL_TICKS) return false;
+      // Decay all needs first. Decisions then use the same pre-movement phase;
+      // no earlier agent can leak its new location to the following agent.
       for (const n of this.npcs) {
-        n.hunger = Math.min(100, n.hunger + 17);
-        n.energy = Math.max(0, n.energy - 12);
-        n.social = Math.min(100, n.social + 11);
-        let options = [
+        n.hunger = clamp(n.hunger + 17);
+        n.energy = clamp(n.energy - 12);
+        n.social = clamp(n.social + 11);
+      }
+      const decisions = this.npcs.map((n) =>
+        chooseAction(
+          n,
           {
-            loc: 0,
-            action: "休息",
-            score: (100 - n.energy) * 0.85 + (slot === 3 ? 30 : 0),
-            reason: "精力不足，需要休息",
+            tick: this.tick,
+            slot: this.tick % 4,
+            party: this.party === this.tick,
+            memories: n.memory.map((id) => this.events[id - 1]),
+            roommates: this.npcs
+              .filter((p) => this.rooms[p.id] === this.rooms[n.id])
+              .map((p) => p.id),
           },
-          { loc: 2, action: "吃饭", score: n.hunger, reason: "饥饿需求优先" },
-          {
-            loc: 1,
-            action: "上课",
-            score: (slot === 0 ? 65 : 10) + n.ambition * 22,
-            reason: "课程安排与学业目标",
-          },
-          {
-            loc: 3,
-            action: "自习",
-            score: 30 + n.ambition * 28 + (n.goal === "争取奖学金" ? 20 : 0),
-            reason: "学业目标与进取心",
-          },
-          {
-            loc: 4,
-            action: "参加社团",
-            score:
-              n.social * 0.6 + n.ext * 28 + (this.party === this.tick ? 65 : 0),
-            reason:
-              this.party === this.tick
-                ? "开放日提高了社交吸引力"
-                : "社交需求与外向性",
-          },
-        ];
-        options.forEach((o) => (o.score += this.rand() * 18));
-        options.sort((a, b) => b.score - a.score);
-        const a = options[0];
-        let prev = n.last;
-        n.loc = a.loc;
-        n.action = a.action;
-        n.why = a.reason;
-        n.energy = clamp(n.energy + (a.loc === 0 ? 42 : 0));
-        n.hunger = clamp(n.hunger - (a.loc === 2 ? 65 : 0));
-        if (a.loc === 1 || a.loc === 3)
+          () => this.rand(),
+        ),
+      );
+      for (const n of this.npcs) {
+        const { chosen, options } = decisions[n.id];
+        n.previousLoc = n.loc;
+        n.loc = chosen.loc;
+        n.action = chosen.action;
+        n.why = chosen.reason;
+        n.interaction = "按自己的节奏生活";
+        n.intent = chosen.kind
+          ? {
+              kind: chosen.kind,
+              target: chosen.target,
+              evidence: chosen.evidence,
+            }
+          : null;
+        n.energy = clamp(n.energy + (n.loc === 0 ? 42 : 0));
+        n.hunger = clamp(n.hunger - (n.loc === 2 ? 65 : 0));
+        if (n.loc === 1 || n.loc === 3)
           n.progress += 4 + Math.round(n.ambition * 5);
-        let e = this.log(
-          `${n.name}前往${places[a.loc]}${a.action}。`,
+        const id = this.log(
+          `${n.name}前往${places[n.loc]}${chosen.kind ? `，${chosen.action}` : chosen.action}。`,
           "action",
           [n.id],
-          [prev, this.envEvent],
+          [n.last, ...chosen.evidence, ...this.environmentParents(n.loc)],
           {
-            reason: a.reason,
+            reason: chosen.reason,
+            target: chosen.target ?? null,
+            location: n.loc,
+            observedPeople: [],
             scores: options.map((o) => ({
               action: o.action,
-              score: +o.score.toFixed(1),
+              location: o.loc,
+              target: o.target ?? null,
+              total: +o.score.toFixed(2),
+              needAndGoal: +o.base.toFixed(2),
+              habit: o.habit,
+              avoidance: +o.avoidance.toFixed(2),
+              exhaustion: o.exhaustion,
+              urgentMeal: o.urgentMeal,
+              noise: +o.noise.toFixed(2),
             })),
           },
+          1,
         );
-        this.remember(n, e);
+        this.remember(n, id);
       }
-      const order = this.shuffle([...this.npcs]);
-      const paired = new Set();
-      for (const a of order) {
-        if (paired.has(a.id)) continue;
-        let peers = order.filter(
-          (b) =>
-            b.id !== a.id &&
-            !paired.has(b.id) &&
-            b.loc === a.loc &&
-            (a.loc !== 0 || this.rooms[a.id] === this.rooms[b.id]),
-        );
-        if (!peers.length) continue;
-        let b = peers[Math.floor(this.rand() * peers.length)];
-        paired.add(a.id);
-        paired.add(b.id);
-        let r = a.rel[b.id],
-          s = b.rel[a.id];
-        let bias = a.memory.filter((id) => {
-          let e = this.events[id - 1];
-          return e.people.includes(b.id) && e.type === "misunderstanding";
-        }).length;
-        let chance = 0.13 + a.sensitive * 0.17 + bias * 0.055;
-        let roll = this.rand();
-        let type, delta, story, reason;
-        if (r.aff < 0 && roll > 0.48) {
-          type = "repair";
-          delta = 9;
-          story = "把之前的话说开了";
-          reason = "再次相遇且关系紧张，获得澄清机会";
-        } else if (roll < chance) {
-          type = "misunderstanding";
-          delta = -9;
-          story = "因一句没说清的话产生误解";
-          reason = `敏感度与负面记忆形成误读概率 ${Math.round(chance * 100)}%`;
-        } else if (
-          (a.loc === 1 || a.loc === 3) &&
-          Math.abs(a.ambition - b.ambition) > 0.35
-        ) {
-          type = "rivalry";
-          delta = -4;
-          story = "为学业表现暗暗较劲";
-          reason = "同处学习地点，进取心差异大于 0.35";
-        } else if (r.aff > 14 && a.ext > 0.35 && roll > 0.48) {
-          type = "crush";
-          delta = 7;
-          r.crush = clamp(r.crush + 16);
-          story = "开始在意对方的每一个小动作";
-          reason = "熟悉度超过 14，外向性与本次随机检定触发单向心动";
-        } else {
-          type = "friendship";
-          delta = 7;
-          story =
-            a.loc === 1 && this.groups[a.id] === this.groups[b.id]
-              ? "在小组合作中找到了默契"
-              : "聊了一会儿，发现彼此有点合拍";
-          reason = "同地点相遇，未触发冲突或竞争规则";
+      // Observation is local and timestamped. Old sightings may be wrong later.
+      for (const n of this.npcs)
+        for (const p of this.npcs) {
+          if (
+            p.id !== n.id &&
+            p.loc === n.loc &&
+            (n.loc !== 0 || this.rooms[p.id] === this.rooms[n.id])
+          ) {
+            this.events[n.last - 1].data.observedPeople.push(p.id);
+            const sighting = {
+              loc: p.loc,
+              tick: this.tick,
+              event: n.last,
+              missed: false,
+            };
+            n.known[p.id] = {
+              ...sighting,
+              routine: { ...n.known[p.id]?.routine, [this.tick % 4]: sighting },
+            };
+          }
         }
-        let bonus =
-          a.loc === 1 && this.groups[a.id] === this.groups[b.id] && delta > 0
-            ? 4
-            : 0;
-        r.aff = clamp(r.aff + delta + bonus, -100);
-        s.aff = clamp(s.aff + delta + bonus, -100);
-        r.trust = clamp(r.trust + (delta > 0 ? 4 : -6), -100);
-        s.trust = clamp(s.trust + (delta > 0 ? 3 : -4), -100);
-        a.social = clamp(a.social - 30);
-        b.social = clamp(b.social - 30);
-        let e = this.log(
-          `${a.name}与${b.name}${story}。`,
-          type,
-          [a.id, b.id],
-          [a.last, b.last, this.envEvent],
-          {
-            reason,
-            delta: delta + bonus,
-            roll: +roll.toFixed(3),
-            location: places[a.loc],
-          },
-        );
-        this.remember(a, e);
-        this.remember(b, e);
-      }
-      this.envEvent = null;
+      runSocial(this);
       this.tick++;
-      if (this.tick % 4 === 0) {
-        let day = this.tick / 4,
-          stories = this.events.filter(
-            (e) =>
-              e.tick >= this.tick - 4 &&
-              e.tick < this.tick &&
-              e.people.length === 2,
-          );
-        this.log(
-          `第 ${day} 天手记：${stories.length} 次交集，${stories.filter((e) => e.type === "crush").length} 次心动，${stories.filter((e) => e.type === "misunderstanding").length} 次误解。`,
-          "summary",
-          [],
-          stories.map((e) => e.id),
-        );
-      }
+      if (this.tick % 4 === 0) this.summarize();
       return true;
     }
-    replay() {
-      let w = new World(this.seed);
-      while (w.tick < this.tick) {
-        for (const x of this.inputs.filter((x) => x.tick === w.tick))
-          w.intervene(x.kind);
-        w.step();
+    summarize() {
+      const stories = this.events.filter(
+        (e) =>
+          e.tick >= this.tick - 4 &&
+          e.tick < this.tick &&
+          [
+            "friendship",
+            "crush",
+            "misunderstanding",
+            "repair",
+            "rivalry",
+          ].includes(e.type),
+      );
+      const pairs = new Set(),
+        highlights = [];
+      for (const e of [...stories].sort(
+        (a, b) => b.importance - a.importance || b.tick - a.tick || b.id - a.id,
+      )) {
+        const pair = [...e.people].sort((a, b) => a - b).join("-");
+        if (pairs.has(pair)) continue;
+        pairs.add(pair);
+        highlights.push(e.id);
+        if (highlights.length === 3) break;
       }
-      for (const x of this.inputs.filter((x) => x.tick === this.tick))
-        w.intervene(x.kind);
-      return w;
+      const counts = {
+        meetings: stories.length,
+        crushes: stories.filter((e) => e.type === "crush").length,
+        misunderstandings: stories.filter((e) => e.type === "misunderstanding")
+          .length,
+        invitations: this.events.filter(
+          (e) =>
+            e.tick >= this.tick - 4 &&
+            e.tick < this.tick &&
+            e.type === "invitation",
+        ).length,
+      };
+      this.log(
+        `第 ${this.tick / 4} 天，有些关系悄悄近了，也有人还在等下一次解释的机会。`,
+        "summary",
+        [],
+        highlights,
+        { day: this.tick / 4, highlights, counts },
+        2,
+      );
+    }
+    replay() {
+      const world = new World(this.seed);
+      while (world.tick < this.tick) {
+        for (const input of this.inputs.filter((x) => x.tick === world.tick))
+          world.intervene(input.kind);
+        world.step();
+      }
+      for (const input of this.inputs.filter((x) => x.tick === this.tick))
+        world.intervene(input.kind);
+      return world;
+    }
+    checksum() {
+      return hash(JSON.stringify(this)).toString(16).padStart(8, "0");
+    }
+    toSave() {
+      return {
+        schemaVersion: SCHEMA_VERSION,
+        engineVersion: ENGINE_VERSION,
+        seed: this.seed,
+        tick: this.tick,
+        inputs: this.inputs.map((x) => ({ ...x })),
+        checksum: this.checksum(),
+      };
+    }
+    static fromSave(save) {
+      if (
+        !save ||
+        typeof save !== "object" ||
+        save.schemaVersion !== SCHEMA_VERSION
+      )
+        throw new Error("存档格式不兼容，请使用 v0.2 导出的记录。");
+      if (save.engineVersion !== ENGINE_VERSION)
+        throw new Error(
+          `存档来自引擎 ${String(save.engineVersion).slice(0, 24)}，当前为 ${ENGINE_VERSION}，暂不支持跨版本重放。`,
+        );
+      if (
+        typeof save.seed !== "string" ||
+        !save.seed.length ||
+        save.seed.length > 128 ||
+        !Number.isInteger(save.tick) ||
+        save.tick < 0 ||
+        save.tick > TOTAL_TICKS ||
+        !Array.isArray(save.inputs) ||
+        save.inputs.length > MAX_INPUTS ||
+        !/^[a-f0-9]{8}$/.test(save.checksum)
+      )
+        throw new Error("存档内容不完整或超出了允许范围。");
+      let previous = -1;
+      for (const input of save.inputs) {
+        if (
+          !input ||
+          !Number.isInteger(input.tick) ||
+          input.tick < previous ||
+          input.tick < 0 ||
+          input.tick >= TOTAL_TICKS ||
+          input.tick > save.tick ||
+          !kinds.includes(input.kind)
+        )
+          throw new Error("存档中的干预顺序或内容无效。");
+        previous = input.tick;
+      }
+      // Reconstruct from validated inputs rather than trusting imported NPC state.
+      const world = new World(save.seed);
+      for (let tick = 0; tick <= save.tick; tick++) {
+        for (const input of save.inputs.filter((x) => x.tick === tick))
+          world.intervene(input.kind);
+        if (tick < save.tick) world.step();
+      }
+      if (world.checksum() !== save.checksum)
+        throw new Error("重放校验失败，文件可能被修改或来自不同的规则版本。");
+      return world;
     }
   }
-  function clamp(v, min = 0) {
-    return Math.max(min, Math.min(100, v));
-  }
-  const api = { World, names, places, slots };
-  if (typeof module !== "undefined") module.exports = api;
+  const api = { ...config, World };
+  if (node) module.exports = api;
   else root.Campus = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -15,6 +15,12 @@ const allowed = new Set([
   "/src/engine.js",
   "/src/app.js",
   "/src/style.css",
+  "/src/sim/config.js",
+  "/src/sim/random.js",
+  "/src/sim/decision.js",
+  "/src/sim/social.js",
+  "/src/ui/map.js",
+  "/src/ui/views.js",
 ]);
 const server = http.createServer(async (request, response) => {
   let pathname;
