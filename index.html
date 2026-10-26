@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="UTF-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>赛博校园 · 七日观察</title
+  ><link rel="stylesheet" href="src/style.css" />
+  <body>
+    <header>
+      <a class="brand" href="#"
+        >✳ <b>赛博校园</b><small>CYBER CAMPUS / LIFE OBSERVATORY</small></a
+      ><span class="live">● 本地规则模拟 · 无需 API</span
+      ><button id="help">玩法说明 ↗</button>
+    </header>
+    <main>
+      <section class="intro">
+        <div>
+          <div class="eyebrow">一场关于相遇的微型实验 / VOL. 001</div>
+          <h1>他们生活，你看故事。</h1>
+          <p>十个独立的小世界，在同一座校园慢慢交织。</p>
+        </div>
+        <div class="week">
+          <strong id="day">01</strong
+          ><span>/ 07 天<br /><b id="slot">清晨 · 07:00</b></span>
+        </div>
+      </section>
+      <section class="toolbar">
+        <div>
+          <button id="play" class="primary">▶ 继续</button
+          ><button id="step">下一时段 →</button
+          ><select id="speed" aria-label="播放速度">
+            <option value="2200">1× 正常</option>
+            <option value="900">2× 快速</option>
+            <option value="250">4× 加速</option>
+          </select>
+        </div>
+        <div class="seed">
+          <label
+            >世界种子
+            <input id="seed" value="campus-2026" aria-label="世界种子" /></label
+          ><button id="reset">新建世界</button
+          ><button id="replay">↺ 重放</button
+          ><button id="export">导出记录</button>
+        </div>
+      </section>
+      <div class="layout">
+        <section class="left">
+          <div class="panel map-panel">
+            <div class="panelhead">
+              <h2>校园观察室 <small>LIVE MAP</small></h2>
+              <span id="count">10 位同学 · 自主生活中</span>
+            </div>
+            <div class="map" id="map">
+              <svg
+                class="paths"
+                viewBox="0 0 800 460"
+                preserveAspectRatio="none"
+              >
+                <path d="M160 120H630V350H160ZM400 120V350M160 235H630" />
+              </svg>
+              <div class="lawn">✳<br /><span>让故事自然发生</span></div>
+            </div>
+            <div class="legend">
+              <span>● 点击小人，进入 TA 的世界</span
+              ><span>每步 = 1 个时段 · 共 28 步</span>
+            </div>
+          </div>
+          <div class="panel intervention">
+            <div class="panelhead">
+              <h2>轻轻拨动世界 <small>INTERVENTIONS</small></h2>
+              <span>改变相遇的机会</span>
+            </div>
+            <div class="cards">
+              <button data-do="rooms">
+                <em>⌂</em><b>宿舍重排</b><span>换个室友，会怎样？</span></button
+              ><button data-do="groups">
+                <em>▦</em><b>课程随机分组</b
+                ><span>让不同的人一起合作</span></button
+              ><button data-do="party">
+                <em>✧</em><b>举办社团开放日</b
+                ><span>下一时段增加社交吸引力</span>
+              </button>
+            </div>
+            <p id="notice">
+              干预立即记录；结果由角色自主选择，不保证特定剧情。
+            </p>
+          </div>
+          <div class="panel">
+            <div class="panelhead">
+              <h2>校园墙 <small>DAILY STORIES</small></h2>
+              <span>每日归档</span>
+            </div>
+            <div id="wall"></div>
+          </div>
+        </section>
+        <aside class="panel person">
+          <div class="panelhead">
+            <h2>生命档案</h2>
+            <span id="person-index"></span>
+          </div>
+          <div id="roster"></div>
+          <div id="profile"></div>
+        </aside>
+      </div>
+      <section class="panel timeline">
+        <div class="panelhead">
+          <h2>故事正在发生 <small>EVENT TIMELINE</small></h2>
+          <select id="filter" aria-label="事件筛选">
+            <option value="stories">关系故事</option>
+            <option value="all">全部事件</option>
+            <option value="selected">所选角色</option>
+            <option value="intervention">环境干预</option>
+          </select>
+        </div>
+        <div id="events"></div>
+      </section>
+      <footer>
+        七天不是结局，只是一次观察。<span
+          >RULE ENGINE v0.1 · DETERMINISTIC WORLD</span
+        >
+      </footer>
+    </main>
+    <dialog id="detail">
+      <button id="close">关闭 ×</button>
+      <div id="detailbody"></div>
+    </dialog>
+    <script src="src/engine.js"></script>
+    <script src="src/app.js"></script>
+  </body>
+</html>

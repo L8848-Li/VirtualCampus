@@ -1,0 +1,20 @@
+{
+  "name": "virtual-campus",
+  "version": "0.1.0",
+  "private": true,
+  "description": "赛博校园：可解释、可复现、无需模型密钥的校园微型生命模拟器。",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/L8848-Li/VirtualCampus.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "node scripts/dev-server.cjs",
+    "start": "node scripts/dev-server.cjs",
+    "check": "node --check src/engine.js && node --check src/app.js && node --check scripts/dev-server.cjs && node --check tests/engine.test.cjs",
+    "test": "node tests/engine.test.cjs"
+  }
+}
