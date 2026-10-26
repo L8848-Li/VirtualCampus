@@ -1,8 +1,20 @@
-import type { AgentState, DecisionContext, ActionOption, ScoredAction, Knowledge } from './types.ts';
-export const clamp = (v: number, low = 0, high = 100) => Math.max(low, Math.min(high, v));
+import { active } from "./plans.ts";
+import type {
+  AgentState,
+  DecisionContext,
+  ActionOption,
+  ScoredAction,
+  Knowledge,
+} from "./types.ts";
+export const clamp = (v: number, low = 0, high = 100) =>
+  Math.max(low, Math.min(high, v));
 // Only the agent's own state, recent observations and public environment enter
 // this policy. It cannot inspect another agent's current position or needs.
-export function chooseAction(n: AgentState, context: DecisionContext, random: () => number) {
+export function chooseAction(
+  n: AgentState,
+  context: DecisionContext,
+  random: () => number,
+) {
   const { tick, slot, party, memories, roommates } = context;
   const options: ActionOption[] = [
     {
@@ -38,7 +50,39 @@ export function chooseAction(n: AgentState, context: DecisionContext, random: ()
         : "社交需求与兴趣推动参加社团",
     },
   ];
-  const seen = Object.entries(n.known).flatMap<[string, Knowledge & {basis?: string}]>(([id, k]) => {
+  const plan = active(n.plan) ? n.plan : null;
+  if (
+    plan?.kind === "appointment" &&
+    tick >= plan.dueTick &&
+    tick <= plan.untilTick
+  ) {
+    options.push({
+      loc: plan.location,
+      action: "赴约一起吃饭",
+      kind: "appointment",
+      target: plan.target,
+      base: n.hunger + n.social * 0.18 + 8,
+      reason: "记得已经答应的时间和地点，愿意为约定留出一个时段",
+      evidence: [plan.lastEvent],
+    });
+  }
+  for (const task of context.tasks || []) {
+    if (task.status !== "open" || !task.members.includes(n.id)) continue;
+    const urgency = Math.max(0, 8 - (task.deadline - tick)) * 2.6;
+    options.push({
+      loc: task.location,
+      action: "整理小组报告资料",
+      kind: "task",
+      taskId: task.id,
+      base:
+        28 + n.ambition * 24 + (n.goal === "争取奖学金" ? 22 : 10) + urgency,
+      reason: `${task.title}还需要整理，临近截止会提高优先级`,
+      evidence: [task.lastEvent],
+    });
+  }
+  const seen = Object.entries(n.known).flatMap<
+    [string, Knowledge & { basis?: string }]
+  >(([id, k]) => {
     const routine = k.routine?.[slot];
     // Prefer a personally observed routine at the same time of day. This is
     // still a fallible prediction, not a read of another agent's live state.
@@ -103,12 +147,30 @@ export function chooseAction(n: AgentState, context: DecisionContext, random: ()
     }
     // Meeting friends cannot remove the physiological cost of an outing.
     o.exhaustion = o.kind && n.energy < 25 ? 38 : 0;
-    o.urgentMeal = o.kind && n.hunger > 78 ? 30 : 0;
+    o.urgentMeal = o.kind && n.hunger > 78 && o.loc !== 2 ? 30 : 0;
+    const honors =
+      plan &&
+      tick >= plan.dueTick &&
+      (plan.kind === "appointment"
+        ? o.kind === "appointment" && o.target === plan.target
+        : o.kind === "task" && o.taskId === plan.taskId);
+    o.commitment = honors ? 26 : 0;
+    o.switching = plan && tick >= plan.dueTick && !honors ? 9 : 0;
     o.noise = random() * 12;
     o.score =
-      o.base + o.habit - o.avoidance - o.exhaustion - o.urgentMeal + o.noise;
+      o.base +
+      o.habit +
+      o.commitment -
+      o.switching -
+      o.avoidance -
+      o.exhaustion -
+      o.urgentMeal +
+      o.noise;
     if (o.avoidance) o.reason += "；也想避开上次相处紧张的人";
   }
   options.sort((a, b) => b.score! - a.score!);
-  return { chosen: options[0] as ScoredAction, options: options as ScoredAction[] };
+  return {
+    chosen: options[0] as ScoredAction,
+    options: options as ScoredAction[],
+  };
 }

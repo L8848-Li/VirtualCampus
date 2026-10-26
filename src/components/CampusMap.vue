@@ -1,15 +1,158 @@
 <script setup lang="ts">
-import { computed, ref, watch, nextTick } from 'vue';
-import type { WorldSnapshot } from '../core/types.ts';
-import { places, profiles } from '../core/config.ts';
-import AvatarIcon from './AvatarIcon.vue';
-const props=defineProps<{world:WorldSnapshot;selected:number;watched:number[];follow:boolean;duration:number}>();
-defineEmits<{select:[id:number]}>();
-const root=ref<HTMLElement>();
-const anchors=[{x:17,y:24},{x:50,y:24},{x:24,y:79},{x:83,y:24},{x:77,y:79}];
-const buildings=[{cls:'dorm',title:'梧桐宿舍',sub:'DORMITORY',icon:'⌂'},{cls:'classroom',title:'明理教学楼',sub:'CLASSROOM',icon:'▦'},{cls:'canteen',title:'一日食堂',sub:'CANTEEN',icon:'♨'},{cls:'library',title:'知秋图书馆',sub:'LIBRARY',icon:'▤'},{cls:'club',title:'有光社团中心',sub:'CLUB HOUSE',icon:'✧'}];
-const points=computed(()=>props.world.npcs.map(n=>{const occupants=props.world.npcs.filter(p=>p.loc===n.loc),index=occupants.findIndex(p=>p.id===n.id),anchor=anchors[n.loc];return {x:anchor.x+((index%5)-2)*4.1,y:anchor.y+Math.floor(index/5)*10};}));
-const scene=computed(()=>['morning','noon','afternoon','night'][props.world.tick?(props.world.tick-1)%4:0]);
-watch(()=>props.world.tick,async()=>{const before=new Map<number,{x:number;y:number}>();root.value?.querySelectorAll<HTMLElement>('.map-person').forEach(el=>before.set(Number(el.dataset.person),{x:parseFloat(el.style.left),y:parseFloat(el.style.top)}));await nextTick();if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;root.value?.querySelectorAll<HTMLElement>('.map-person').forEach(el=>{const from=before.get(Number(el.dataset.person)),to=points.value[Number(el.dataset.person)];if(!from||Math.abs(from.x-to.x)<8&&Math.abs(from.y-to.y)<12)return;el.getAnimations().forEach(a=>a.cancel());el.animate([{left:`${from.x}%`,top:`${from.y}%`},{left:`${from.x}%`,top:'57%'},{left:`${to.x}%`,top:'57%'},{left:`${to.x}%`,top:`${to.y}%`}],{duration:props.duration,easing:'ease-in-out'});});});
+import { computed, ref, watch, nextTick } from "vue";
+import type { WorldSnapshot } from "../core/types.ts";
+import { places, profiles } from "../core/config.ts";
+import AvatarIcon from "./AvatarIcon.vue";
+const props = defineProps<{
+  world: WorldSnapshot;
+  selected: number;
+  watched: number[];
+  follow: boolean;
+  duration: number;
+}>();
+defineEmits<{ select: [id: number] }>();
+const root = ref<HTMLElement>();
+const anchors = [
+  { x: 17, y: 24 },
+  { x: 50, y: 24 },
+  { x: 24, y: 79 },
+  { x: 83, y: 24 },
+  { x: 77, y: 79 },
+];
+const buildings = [
+  { cls: "dorm", title: "梧桐宿舍", sub: "DORMITORY", icon: "⌂" },
+  { cls: "classroom", title: "明理教学楼", sub: "CLASSROOM", icon: "▦" },
+  { cls: "canteen", title: "一日食堂", sub: "CANTEEN", icon: "♨" },
+  { cls: "library", title: "知秋图书馆", sub: "LIBRARY", icon: "▤" },
+  { cls: "club", title: "有光社团中心", sub: "CLUB HOUSE", icon: "✧" },
+];
+const points = computed(() =>
+  props.world.npcs.map((n) => {
+    const occupants = props.world.npcs.filter((p) => p.loc === n.loc),
+      index = occupants.findIndex((p) => p.id === n.id),
+      anchor = anchors[n.loc];
+    return {
+      x: anchor.x + ((index % 5) - 2) * 4.1,
+      y: anchor.y + Math.floor(index / 5) * 10,
+    };
+  }),
+);
+const scene = computed(
+  () =>
+    ["morning", "noon", "afternoon", "night"][
+      props.world.tick ? (props.world.tick - 1) % 4 : 0
+    ],
+);
+watch(
+  () => props.world.tick,
+  async () => {
+    const before = new Map<number, { x: number; y: number }>();
+    root.value?.querySelectorAll<HTMLElement>(".map-person").forEach((el) =>
+      before.set(Number(el.dataset.person), {
+        x: parseFloat(el.style.left),
+        y: parseFloat(el.style.top),
+      }),
+    );
+    await nextTick();
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    root.value?.querySelectorAll<HTMLElement>(".map-person").forEach((el) => {
+      const from = before.get(Number(el.dataset.person)),
+        to = points.value[Number(el.dataset.person)];
+      if (
+        !from ||
+        (Math.abs(from.x - to.x) < 8 && Math.abs(from.y - to.y) < 12)
+      )
+        return;
+      el.getAnimations().forEach((a) => a.cancel());
+      el.animate(
+        [
+          { left: `${from.x}%`, top: `${from.y}%` },
+          { left: `${from.x}%`, top: "57%" },
+          { left: `${to.x}%`, top: "57%" },
+          { left: `${to.x}%`, top: `${to.y}%` },
+        ],
+        { duration: props.duration, easing: "ease-in-out" },
+      );
+    });
+  },
+);
 </script>
-<template><div id="map" ref="root" class="campus-map" :data-scene="scene" aria-label="校园地图"><div class="campus-ground"><svg class="campus-paths" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true"><path d="M170 150V345H830V150M500 150V345M240 345V500M770 345V500"/></svg><div class="quad"><span>✳</span><small>梧桐广场</small></div><div v-for="i in 4" :key="i" class="tree" :class="`t${i}`">♣</div><section v-for="(b,i) in buildings" :key="b.cls" class="campus-building" :class="b.cls"><div class="roof"><span>{{b.icon}} {{b.title}}</span><small>{{world.npcs.filter(n=>n.loc===i).length}} 人</small></div><div class="building-floor"><span class="building-sub">{{b.sub}}</span><div class="furniture"><i v-for="j in 3" :key="j"></i></div></div></section><div class="map-people"><button v-for="n in world.npcs" :key="n.id" type="button" class="map-person" :class="{selected:n.id===selected,watched:watched.includes(n.id),followed:follow&&n.id===selected}" :data-person="n.id" :style="{left:points[n.id].x+'%',top:points[n.id].y+'%','--c':profiles[n.id].color}" :aria-label="`查看${n.name}，${places[n.loc]}，${n.action}`" :aria-pressed="n.id===selected" :title="`${n.name} · ${n.action} · ${n.interaction}`" @click="$emit('select',n.id)"><AvatarIcon :id="n.id"/><span class="person-name">{{n.name}}</span><small class="person-mood">{{n.interaction.includes('尴尬')?'…':n.intent?'↗':n.action==='休息'?'z':n.loc===2?'♨':n.loc===3?'▤':'·'}}</small></button></div><div v-if="follow" id="follow-bubble" class="follow-bubble">◎ 跟随 {{world.npcs[selected].name}} · {{world.npcs[selected].interaction}}</div></div></div></template>
+<template>
+  <div
+    id="map"
+    ref="root"
+    class="campus-map"
+    :data-scene="scene"
+    aria-label="校园地图"
+  >
+    <div class="campus-ground">
+      <svg
+        class="campus-paths"
+        viewBox="0 0 1000 600"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path d="M170 150V345H830V150M500 150V345M240 345V500M770 345V500" />
+      </svg>
+      <div class="quad"><span>✳</span><small>梧桐广场</small></div>
+      <div v-for="i in 4" :key="i" class="tree" :class="`t${i}`">♣</div>
+      <section
+        v-for="(b, i) in buildings"
+        :key="b.cls"
+        class="campus-building"
+        :class="b.cls"
+      >
+        <div class="roof">
+          <span>{{ b.icon }} {{ b.title }}</span
+          ><small>{{ world.npcs.filter((n) => n.loc === i).length }} 人</small>
+        </div>
+        <div class="building-floor">
+          <span class="building-sub">{{ b.sub }}</span>
+          <div class="furniture"><i v-for="j in 3" :key="j"></i></div>
+        </div>
+      </section>
+      <div class="map-people">
+        <button
+          v-for="n in world.npcs"
+          :key="n.id"
+          type="button"
+          class="map-person"
+          :class="{
+            selected: n.id === selected,
+            watched: watched.includes(n.id),
+            followed: follow && n.id === selected,
+          }"
+          :data-person="n.id"
+          :style="{
+            left: points[n.id].x + '%',
+            top: points[n.id].y + '%',
+            '--c': profiles[n.id].color,
+          }"
+          :aria-label="`查看${n.name}，${places[n.loc]}，${n.action}`"
+          :aria-pressed="n.id === selected"
+          :title="`${n.name} · ${n.action} · ${n.interaction}`"
+          @click="$emit('select', n.id)"
+        >
+          <AvatarIcon :id="n.id" /><span class="person-name">{{ n.name }}</span
+          ><small class="person-mood">{{
+            n.interaction.includes("尴尬")
+              ? "…"
+              : n.intent
+                ? "↗"
+                : n.action === "休息"
+                  ? "z"
+                  : n.loc === 2
+                    ? "♨"
+                    : n.loc === 3
+                      ? "▤"
+                      : "·"
+          }}</small>
+        </button>
+      </div>
+      <div v-if="follow" id="follow-bubble" class="follow-bubble">
+        ◎ 跟随 {{ world.npcs[selected].name }} ·
+        {{ world.npcs[selected].interaction }}
+      </div>
+    </div>
+  </div>
+</template>

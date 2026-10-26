@@ -1,5 +1,8 @@
-import type { AgentState, EventType } from './types.ts';
-import type { World } from '../engine.ts';
+import { invitationDecision } from "./invitations.ts";
+export { invitationDecision } from "./invitations.ts";
+import { proposeAppointment, resolveAppointment } from "./plans.ts";
+import type { AgentState, EventType } from "./types.ts";
+import type { World } from "../engine.ts";
 const clamp = (v: number, min = 0) => Math.max(min, Math.min(100, v));
 const contexts = [
   "熄灯前的聊天",
@@ -8,50 +11,43 @@ const contexts = [
   "参考书借阅",
   "活动海报的准备",
 ];
-export function invitationDecision(receiver: AgentState, senderId: number, random: () => number) {
-  const r = receiver.rel[senderId];
-  const parts = {
-    willingness: 25 + receiver.ext * 10,
-    social: receiver.social * 0.42,
-    affection: r.aff * 0.4,
-    trust: r.trust * 0.18,
-    tired: receiver.energy < 28 ? -38 : 0,
-    hungry: receiver.hunger > 76 ? -32 : 0,
-    noise: random() * 12,
-  };
-  const score = Object.values(parts).reduce((a, b) => a + b, 0);
-  return {
-    accepted: score >= 48,
-    score,
-    parts,
-    reason:
-      score >= 48
-        ? "对方愿意相处，精力、需求和关系共同支持接受邀约"
-        : receiver.energy < 28
-          ? "对方精力不足，决定先休息"
-          : receiver.hunger > 76
-            ? "对方更想先解决吃饭问题"
-            : r.aff < 0
-              ? "对方对这段关系仍有顾虑"
-              : "对方当前更想按自己的节奏行动",
-  };
-}
+
 function resolve(world: World, a: AgentState, b: AgentState, invited = false) {
   const r = a.rel[b.id],
     s = b.rel[a.id];
   const memory = a.memory
     .map((id) => world.events[id - 1])
     .filter((e) => e.people.includes(b.id));
-  const negative = memory.filter((e) => e.type === "misunderstanding").length;
+  const missed = memory
+    .filter((e) => e.type === "plan_expired" && e.data.target === b.id)
+    .sort((x, y) => y.id - x.id)[0];
+  const lastRepair = memory
+    .filter((e) => e.type === "repair")
+    .sort((x, y) => y.id - x.id)[0];
+  const unresolvedMiss =
+    missed && (!lastRepair || missed.id > lastRepair.id) ? missed : undefined;
+  const negative =
+    memory.filter((e) => e.type === "misunderstanding").length +
+    (unresolvedMiss ? 1 : 0);
   const chance = 0.09 + a.sensitive * 0.17 + negative * 0.04;
   const roll = world.rand();
-  const topic = contexts[a.loc];
+  const task = world.tasks.find(
+    (t) => t.id === a.intent?.taskId || t.id === b.intent?.taskId,
+  );
+  const topic = task ? `“${task.title}”的资料分工` : contexts[a.loc];
   let type: EventType, delta: number, text: string, reason: string;
-  let perspectives: {person: number; interpretation: string}[] = [];
-  if ((r.aff < 0 || a.intent?.kind === "repair") && roll > 0.32) {
+  let perspectives: { person: number; interpretation: string }[] = [];
+  if (
+    (r.aff < 0 ||
+      a.intent?.kind === "repair" ||
+      (unresolvedMiss && r.trust < 10)) &&
+    roll > 0.32
+  ) {
     type = "repair";
     delta = 10;
-    text = `${a.name}与${b.name}聊起${topic}，把上次没说清的意思重新解释了一遍。`;
+    text = unresolvedMiss
+      ? `${a.name}与${b.name}重新聊起上次没碰上的饭约，终于有机会当面解释。`
+      : `${a.name}与${b.name}聊起${topic}，把上次没说清的意思重新解释了一遍。`;
     reason = "双方再次当面相遇，旧的紧张关系获得澄清机会";
   } else if (roll < chance) {
     type = "misunderstanding";
@@ -115,6 +111,7 @@ function resolve(world: World, a: AgentState, b: AgentState, invited = false) {
   const parents = [
     a.last,
     b.last,
+    unresolvedMiss?.id,
     ...memory.slice(0, 2).map((e) => e.id),
     ...world.environmentParents(a.loc),
   ];
@@ -131,23 +128,45 @@ function resolve(world: World, a: AgentState, b: AgentState, invited = false) {
       probability: chance,
       location: a.loc,
       topic,
+      taskId: task?.id,
       perspectives,
     },
     type === "friendship" ? (firstFriend ? 3 : 2) : 4,
   );
   world.remember(a, id);
   world.remember(b, id);
+  if (type === "friendship" || type === "crush")
+    proposeAppointment(world, a, b, id);
 }
 export function runSocial(world: World) {
   const paired = new Set();
   const order = world.shuffle([...world.npcs]);
   // Invitations are resolved after everyone independently chooses and moves.
-  for (const a of order) {
-    if (!a.intent || paired.has(a.id)) continue;
+  const initiative = [
+    ...order.filter((a) => a.intent?.kind === "appointment"),
+    ...order.filter((a) => a.intent?.kind !== "appointment"),
+  ];
+  for (const a of initiative) {
+    if (
+      !a.intent ||
+      paired.has(a.id) ||
+      a.intent.kind === "task" ||
+      a.intent.target === undefined
+    )
+      continue;
     const b = world.npcs[a.intent.target];
     const colocated =
       b.loc === a.loc &&
       (a.loc !== 0 || world.rooms[a.id] === world.rooms[b.id]);
+    if (a.intent.kind === "appointment") {
+      const met = resolveAppointment(world, a, b, colocated);
+      paired.add(a.id);
+      if (met) {
+        paired.add(b.id);
+        resolve(world, a, b, true);
+      }
+      continue;
+    }
     if (!colocated) {
       const observation = a.known[b.id];
       if (observation) {

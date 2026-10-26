@@ -1,0 +1,13 @@
+{
+  "engineVersion": "0.2.0",
+  "sourceCommit": "f110d8b",
+  "scenario": "quality-N seeds; one open day at tick 2",
+  "metrics": {
+    "seeds": 100,
+    "activityDiversity": 5.997,
+    "fourStepRepeatRate": 0,
+    "crisisRate": 0.001,
+    "invitationAcceptanceRate": 0.774,
+    "misunderstandingRate": 0.194
+  }
+}

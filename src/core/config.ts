@@ -1,4 +1,4 @@
-import type { Profile } from './types.ts';
+import type { Profile } from "./types.ts";
 export const profiles: Profile[] = [
   {
     name: "林夏",
@@ -142,10 +142,10 @@ export const profiles: Profile[] = [
   },
 ];
 
-export const ENGINE_VERSION = "0.2.0";
-export const SCHEMA_VERSION = 2;
+export const ENGINE_VERSION = "0.3.0";
+export const SCHEMA_VERSION = 3;
 export const TOTAL_TICKS = 28;
 export const MAX_INPUTS = 256;
-export const names = profiles.map(p => p.name);
+export const names = profiles.map((p) => p.name);
 export const places = ["宿舍", "教学楼", "食堂", "图书馆", "社团中心"];
 export const slots = ["清晨", "午间", "午后", "夜晚"];

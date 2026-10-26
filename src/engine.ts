@@ -1,17 +1,44 @@
-import * as config from './core/config.ts';
-import { Random, hash } from './core/random.ts';
-import { chooseAction, clamp } from './core/decision.ts';
-import { runSocial } from './core/social.ts';
-import type { AgentState, CampusEvent, EventType, EventData, Intervention, InterventionKind, LocationId, SaveData } from './core/types.ts';
-const { ENGINE_VERSION, SCHEMA_VERSION, TOTAL_TICKS, MAX_INPUTS, profiles, places } = config;
-export * from './core/config.ts';
-export type * from './core/types.ts';
+import { active, preparePlans, finishPlan } from "./core/plans.ts";
+import { createTasks, expireTasks, workTasks } from "./core/tasks.ts";
+import * as config from "./core/config.ts";
+import { Random, hash } from "./core/random.ts";
+import { chooseAction, clamp } from "./core/decision.ts";
+import { runSocial } from "./core/social.ts";
+import type {
+  AgentState,
+  CampusEvent,
+  EventType,
+  EventData,
+  Intervention,
+  InterventionKind,
+  LocationId,
+  SaveData,
+  CampusTask,
+} from "./core/types.ts";
+const {
+  ENGINE_VERSION,
+  SCHEMA_VERSION,
+  TOTAL_TICKS,
+  MAX_INPUTS,
+  profiles,
+  places,
+} = config;
+export * from "./core/config.ts";
+export type * from "./core/types.ts";
 const kinds = ["rooms", "groups", "party"];
 export class World {
-  declare version: string; declare seed: string; declare random: Random;
-  declare tick: number; declare events: CampusEvent[]; declare inputs: Intervention[];
-  declare rooms: number[]; declare groups: number[]; declare party: number;
-  declare environment: Record<InterventionKind, number | null>; declare npcs: AgentState[];
+  declare version: string;
+  declare seed: string;
+  declare random: Random;
+  declare tick: number;
+  declare events: CampusEvent[];
+  declare inputs: Intervention[];
+  declare rooms: number[];
+  declare groups: number[];
+  declare party: number;
+  declare tasks: CampusTask[];
+  declare environment: Record<InterventionKind, number | null>;
+  declare npcs: AgentState[];
   constructor(seed: string | number = "campus-2026") {
     this.version = ENGINE_VERSION;
     this.seed = String(seed);
@@ -51,6 +78,8 @@ export class World {
       known: {},
       rel: Array.from({ length: 10 }, () => ({ aff: 0, trust: 0, crush: 0 })),
       last: null,
+      plan: null,
+      lastPlanTick: -9,
     }));
     this.log(
       "开学了。十个人带着各自的习惯，走进了同一座校园。",
@@ -60,6 +89,7 @@ export class World {
       { seed: this.seed, engineVersion: ENGINE_VERSION },
       1,
     );
+    this.tasks = createTasks(this);
   }
   rand() {
     return this.random.next();
@@ -71,7 +101,14 @@ export class World {
     }
     return a;
   }
-  log(text: string, type: EventType, people: number[] = [], parents: (number | null | undefined)[] = [], data: EventData = {}, importance = 1) {
+  log(
+    text: string,
+    type: EventType,
+    people: number[] = [],
+    parents: (number | null | undefined)[] = [],
+    data: EventData = {},
+    importance = 1,
+  ) {
     const id = this.events.length + 1;
     this.events.push({
       id,
@@ -81,7 +118,9 @@ export class World {
       people,
       parents: [
         ...new Set(
-          parents.filter((p): p is number => Number.isInteger(p) && p! > 0 && p! < id),
+          parents.filter(
+            (p): p is number => Number.isInteger(p) && p! > 0 && p! < id,
+          ),
         ),
       ],
       data,
@@ -137,6 +176,31 @@ export class World {
       { kind, rooms: [...this.rooms], groups: [...this.groups] },
       3,
     );
+    if (kind === "groups")
+      for (let group = 0; group < 3; group++) {
+        const task = this.tasks[group];
+        if (task.status === "open") {
+          task.members = this.npcs
+            .filter((n) => this.groups[n.id] === group)
+            .map((n) => n.id);
+          const previous = task.lastEvent;
+          task.lastEvent = this.log(
+            `${task.title}随课程分组更新了组员，已完成的资料仍然保留。`,
+            "task_announced",
+            task.members,
+            [previous, this.environment.groups],
+            {
+              reason: "公开的课程分组改变了共同任务的参与人，历史工作仍可追溯",
+              taskId: task.id,
+              progress: task.progress,
+              required: task.required,
+            },
+            2,
+          );
+          for (const n of this.npcs.filter((n) => task.members.includes(n.id)))
+            this.remember(n, task.lastEvent);
+        }
+      }
     return true;
   }
   step() {
@@ -148,6 +212,8 @@ export class World {
       n.energy = clamp(n.energy - 12);
       n.social = clamp(n.social + 11);
     }
+    expireTasks(this);
+    preparePlans(this);
     const decisions = this.npcs.map((n) =>
       chooseAction(
         n,
@@ -155,6 +221,7 @@ export class World {
           tick: this.tick,
           slot: this.tick % 4,
           party: this.party === this.tick,
+          tasks: this.tasks.filter((t) => t.members.includes(n.id)),
           memories: n.memory.map((id) => this.events[id - 1]),
           roommates: this.npcs
             .filter((p) => this.rooms[p.id] === this.rooms[n.id])
@@ -165,6 +232,46 @@ export class World {
     );
     for (const n of this.npcs) {
       const { chosen, options } = decisions[n.id];
+      if (active(n.plan) && this.tick >= n.plan.dueTick) {
+        const matches =
+          n.plan.kind === "appointment"
+            ? chosen.kind === "appointment" && chosen.target === n.plan.target
+            : chosen.kind === "task" && chosen.taskId === n.plan.taskId;
+        if (!matches)
+          finishPlan(
+            this,
+            n,
+            "cancelled",
+            "新的需求超过了当前承诺，暂时改了安排",
+          );
+      }
+      if (chosen.kind === "task" && !active(n.plan)) {
+        const id = this.log(
+          `${n.name}给自己留出了两个时段，想把小组资料整理得更完整。`,
+          "plan_started",
+          [n.id],
+          [n.last, ...chosen.evidence],
+          {
+            reason: "根据自己的目标自主开始短期计划，饥饿或疲劳仍可中断",
+            taskId: chosen.taskId,
+          },
+          3,
+        );
+        this.remember(n, id);
+        n.plan = {
+          id: `work-${this.tick}-${n.id}`,
+          kind: "task",
+          taskId: chosen.taskId,
+          location: chosen.loc,
+          createdTick: this.tick,
+          dueTick: this.tick,
+          untilTick: this.tick + 1,
+          stage: "working",
+          attempts: 0,
+          worked: 0,
+          lastEvent: id,
+        };
+      }
       n.previousLoc = n.loc;
       n.loc = chosen.loc;
       n.action = chosen.action;
@@ -173,7 +280,8 @@ export class World {
       n.intent = chosen.kind
         ? {
             kind: chosen.kind,
-            target: chosen.target!,
+            target: chosen.target,
+            taskId: chosen.taskId,
             evidence: chosen.evidence,
           }
         : null;
@@ -202,6 +310,8 @@ export class World {
             exhaustion: o.exhaustion,
             urgentMeal: o.urgentMeal,
             noise: +o.noise.toFixed(2),
+            commitment: o.commitment,
+            switching: o.switching,
           })),
         },
         1,
@@ -229,6 +339,7 @@ export class World {
           };
         }
       }
+    workTasks(this);
     runSocial(this);
     this.tick++;
     if (this.tick % 4 === 0) this.summarize();
@@ -245,6 +356,9 @@ export class World {
           "misunderstanding",
           "repair",
           "rivalry",
+          "task_completed",
+          "task_expired",
+          "plan_fulfilled",
         ].includes(e.type),
     );
     const pairs = new Set<string>(),
@@ -259,7 +373,20 @@ export class World {
       if (highlights.length === 3) break;
     }
     const counts = {
-      meetings: stories.length,
+      meetings: stories.filter((e) =>
+        [
+          "friendship",
+          "crush",
+          "misunderstanding",
+          "repair",
+          "rivalry",
+        ].includes(e.type),
+      ).length,
+      tasksCompleted: stories.filter((e) => e.type === "task_completed").length,
+      plansFulfilled: stories.filter(
+        (e) =>
+          e.type === "plan_fulfilled" && e.data.planId?.startsWith("meal-"),
+      ).length,
       crushes: stories.filter((e) => e.type === "crush").length,
       misunderstandings: stories.filter((e) => e.type === "misunderstanding")
         .length,
@@ -310,7 +437,7 @@ export class World {
       typeof save !== "object" ||
       save.schemaVersion !== SCHEMA_VERSION
     )
-      throw new Error("存档格式不兼容，请使用 v0.2 导出的记录。");
+      throw new Error("存档格式不兼容，请使用 v0.3 导出的记录。");
     if (save.engineVersion !== ENGINE_VERSION)
       throw new Error(
         `存档来自引擎 ${String(save.engineVersion).slice(0, 24)}，当前为 ${ENGINE_VERSION}，暂不支持跨版本重放。`,
