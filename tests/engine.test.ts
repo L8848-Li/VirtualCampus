@@ -1,5 +1,7 @@
-const assert = require("node:assert/strict");
-const { World } = require("../src/engine.js");
+import assert from "node:assert/strict";
+import { test } from "vitest";
+import { World } from "../src/engine.ts";
+test("100 seeds preserve replay, bounds and cycle invariants", () => {
 for (let seed = 0; seed < 100; seed++) {
   const w = new World(seed);
   for (let t = 0; t < 28; t++) {
@@ -11,7 +13,7 @@ for (let seed = 0; seed < 100; seed++) {
     for (const n of w.npcs) {
       assert(n.loc >= 0 && n.loc < 5);
       assert(n.memory.length <= 8);
-      for (const k of ["energy", "hunger", "social"])
+      for (const k of ["energy", "hunger", "social"] as const)
         assert(n[k] >= 0 && n[k] <= 100);
     }
     for (const e of w.events)
@@ -31,3 +33,5 @@ assert.notDeepEqual(a.npcs, c.npcs);
 console.log(
   "PASS: 100 seeds × 28 steps; replay, bounds, memory, causal DAG, cycle termination, seed variation.",
 );
+
+});

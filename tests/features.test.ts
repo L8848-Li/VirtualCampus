@@ -1,9 +1,9 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
-const { World, ENGINE_VERSION } = require("../src/engine.js");
-const { chooseAction } = require("../src/sim/decision.js");
-const { invitationDecision } = require("../src/sim/social.js");
-function context(n) {
+import { test } from "vitest";
+import assert from "node:assert/strict";
+import { World, ENGINE_VERSION } from "../src/engine.ts";
+import { chooseAction } from "../src/core/decision.ts";
+import { invitationDecision } from "../src/core/social.ts";
+function context(n: import("../src/core/types").AgentState) {
   return { tick: 1, slot: 2, party: false, memories: [], roommates: [n.id] };
 }
 
@@ -45,7 +45,7 @@ test("a negative relationship can change the chosen activity and leaves an expla
   n.rel[1] = { aff: -80, trust: -50, crush: 0 };
   const after = chooseAction(n, context(n), () => 0);
   assert.equal(after.chosen.loc, 2);
-  assert(after.options.find((a) => a.loc === 4).evidence.includes(1));
+  assert(after.options.find((a) => a.loc === 4)!.evidence.includes(1));
 });
 
 test("the receiver independently accepts or declines, including due to needs", () => {
@@ -168,7 +168,7 @@ test("the weekly simulation produces social initiative, asymmetric reactions and
       assert(n.memory.every((id) => w.events[id - 1].people.includes(n.id)));
       for (const [id, observation] of Object.entries(n.known)) {
         assert(
-          w.events[observation.event - 1].data.observedPeople.includes(
+          w.events[observation.event - 1].data.observedPeople!.includes(
             Number(id),
           ),
         );

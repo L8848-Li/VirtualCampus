@@ -7,3 +7,4 @@ work/
 !.env.example
 *.log
 .openai/
+dist/

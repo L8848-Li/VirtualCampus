@@ -4,12 +4,14 @@
 
 ## 本地工作
 
-Node.js 22 或更高版本。无需 npm install。
+Node.js 22.12+（建议 24 LTS）。首次执行 npm ci 安装锁定的依赖。
 
 ```sh
+npm ci
 npm run dev
 npm run check
 npm test
+npm run build
 ```
 
 提交前请运行检查和模拟测试；界面改动请附实际运行截图。修复模拟问题时附 seed、时段、干预顺序与导出记录。不要上传个人路径、密钥、真实同学资料或本地存档。

@@ -4,21 +4,22 @@
 
 一个校园背景的半上帝模式微型生命模拟器。观察 10 位 NPC 自主上课、吃饭、休息与社交，通过改变环境影响相遇，围观友情、暗恋、误解与竞争自然形成。
 
-**当前为 v0.2 校园观察版。** 无需大模型 API 密钥，无运行时依赖，纯本地运行。已加入动态校园、人物关注、双向观察的关系图、主动邀约与回避，以及可校验的本机存档。
+**当前为 v0.2 校园观察版。** 无需大模型 API 密钥，仅 Vue 作为界面运行时依赖，纯本地运行。已加入动态校园、人物关注、双向观察的关系图、主动邀约与回避，以及可校验的本机存档。
 
 <img src="docs/images/campus-v02.png" width="430" alt="v0.2 实际运行画面：校园地图、跟随状态和环境干预">
 
 ## 开始玩
 
-下载或克隆后，用浏览器直接打开 `index.html`。也可以使用 Node.js 22+：
+使用 Node.js 22.12+（建议 24 LTS）：
 
 ```sh
 git clone https://github.com/L8848-Li/VirtualCampus.git
 cd VirtualCampus
+npm ci
 npm run dev
 ```
 
-打开 http://127.0.0.1:8765 。无需 `npm install`，无后端服务。端口被占用时：`PORT=8766 npm run dev`。
+打开 http://127.0.0.1:8765 。首次需要安装依赖，无后端服务。端口被占用时：`npm run dev -- --port 8766`。
 
 ## 如何观察
 
@@ -56,17 +57,19 @@ npm test
 
 ```text
 index.html                 页面入口
-src/engine.js              世界推进、事件、记忆与存档
-src/sim/                   角色配置、随机数、决策与社交
+src/engine.ts              世界推进、事件、记忆与存档
+src/core/                   角色配置、随机数、决策与社交
 src/ui/                    地图表现与观察视图
-src/app.js                  控制、界面、导出与因果弹窗
+src/App.vue                  控制、界面、导出与因果弹窗
 src/style.css               地图与响应式样式
-scripts/dev-server.cjs     本地开发入口
+src/controller/            播放、命令与本机存档控制层
 tests/                     确定性、行为与存档回归检查
 docs/ARCHITECTURE.md        底层算法与模块边界
 docs/PROTOTYPE.md           交互与机制说明
 docs/ROADMAP.md             产品诊断、玩法脑暴、版本优先级
 ```
+
+界面已迁移到 Vue 单文件组件，内核仍为独立 TypeScript 模块。
 
 本地服务仅绑定 `127.0.0.1`。项目没有 Sites 配置、部署流程、远程字体或模型服务调用。
 
