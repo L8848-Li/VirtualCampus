@@ -93,31 +93,6 @@ const beliefs = computed(() => [...n.value.beliefs].sort((a, b) =>
         <p>{{ n.why }}</p>
         <strong>{{ n.interaction }}</strong>
       </div>
-      <div class="needs">
-        <div
-          v-for="stat in [
-            { name: '精力', value: n.energy, cls: 'energy' },
-            { name: '饥饿', value: n.hunger, cls: 'hunger' },
-            { name: '社交需求', value: n.social, cls: 'social' },
-          ]"
-          :key="stat.cls"
-          class="stat"
-        >
-          <span>{{ stat.name }}</span>
-          <div class="bar" :class="stat.cls">
-            <i :style="{ width: stat.value + '%' }"></i>
-          </div>
-          <b>{{ Math.round(stat.value) }}</b>
-        </div>
-      </div>
-      <div class="minor-stats">
-        <span>目标 {{ n.goal }}</span
-        ><span>学业 {{ n.progress }}</span
-        ><span
-          >宿舍 {{ world.rooms[n.id] + 1 }} · 小组
-          {{ world.groups[n.id] + 1 }}</span
-        >
-      </div>
       <div v-if="n.plan" class="personal-plan" :class="n.plan.stage">
         <small>心里挂着的小计划 · {{ planLabels[n.plan.stage] }}</small>
         <p>
@@ -131,48 +106,76 @@ const beliefs = computed(() => [...n.value.beliefs].sort((a, b) =>
           它是怎么开始的 ↗
         </button>
       </div>
-      <h4>关系近况</h4>
-      <button
-        v-for="{ r, i } in relationships"
-        :key="i"
-        class="relationship-row"
-        @click="$emit('select', i)"
-      >
-        <span>{{ world.npcs[i].name }}</span
-        ><small>{{ relationLabel(r) }}</small
-        ><b>{{ r.aff > 0 ? "+" : "" }}{{ r.aff }}</b>
-      </button>
-      <template v-if="beliefs.length">
-        <h4>TA 心里的理解 <small>可能有误，也会改变</small></h4>
-        <button v-for="belief in beliefs" :key="belief.id" class="memory belief-memory" @click="$emit('event', belief.evidence.at(-1) || belief.sourceEvent)">
-          <small>{{ belief.status === 'revised' ? '重新理解' : '仍有疑问' }} · {{ clock(belief.updatedTick) }}</small>
-          <span>{{ belief.resolution || belief.claim }}</span>
-        </button>
-      </template>
-      <h4>记得的片段 <small>按重要程度保留 · 最多 8 条</small></h4>
-      <div class="memory-list">
-        <button
-          v-for="id in n.memory"
-          :key="id"
-          class="memory"
-          @click="$emit('event', id)"
-        >
-          <small
-            >{{ clock(world.events[id - 1].tick) }} ·
-            {{ labels[world.events[id - 1].type] }}</small
-          ><span>{{ world.events[id - 1].text }}</span>
-        </button>
-        <p v-if="!n.memory.length" class="empty">还在等第一次相遇。</p>
-      </div>
-      <details class="knowledge">
-        <summary>TA 最近亲眼见到的人</summary>
-        <p v-for="[id, k] in observations" :key="id">
-          {{ world.npcs[Number(id)].name }} · {{ places[k.loc]
-          }}<small
-            >{{ clock(k.tick) }}{{ k.missed ? " · 再去时已不在" : "" }}</small
+      <details class="profile-details">
+        <summary>更多档案、关系与记忆</summary>
+        <div class="needs">
+          <div
+            v-for="stat in [
+              { name: '精力', value: n.energy, cls: 'energy' },
+              { name: '饥饿', value: n.hunger, cls: 'hunger' },
+              { name: '社交需求', value: n.social, cls: 'social' },
+            ]"
+            :key="stat.cls"
+            class="stat"
           >
-        </p>
-        <p v-if="!observations.length">还没有新的目击。</p>
+            <span>{{ stat.name }}</span>
+            <div class="bar" :class="stat.cls">
+              <i :style="{ width: stat.value + '%' }"></i>
+            </div>
+            <b>{{ Math.round(stat.value) }}</b>
+          </div>
+        </div>
+        <div class="minor-stats">
+          <span>目标 {{ n.goal }}</span
+          ><span>学业 {{ n.progress }}</span
+          ><span
+            >宿舍 {{ world.rooms[n.id] + 1 }} · 小组
+            {{ world.groups[n.id] + 1 }}</span
+          >
+        </div>
+        <h4>关系近况</h4>
+        <button
+          v-for="{ r, i } in relationships"
+          :key="i"
+          class="relationship-row"
+          @click="$emit('select', i)"
+        >
+          <span>{{ world.npcs[i].name }}</span
+          ><small>{{ relationLabel(r) }}</small
+          ><b>{{ r.aff > 0 ? "+" : "" }}{{ r.aff }}</b>
+        </button>
+        <template v-if="beliefs.length">
+          <h4>TA 心里的理解 <small>可能有误，也会改变</small></h4>
+          <button v-for="belief in beliefs" :key="belief.id" class="memory belief-memory" @click="$emit('event', belief.evidence.at(-1) || belief.sourceEvent)">
+            <small>{{ belief.status === 'revised' ? '重新理解' : '仍有疑问' }} · {{ clock(belief.updatedTick) }}</small>
+            <span>{{ belief.resolution || belief.claim }}</span>
+          </button>
+        </template>
+        <h4>记得的片段 <small>按重要程度保留 · 最多 8 条</small></h4>
+        <div class="memory-list">
+          <button
+            v-for="id in n.memory"
+            :key="id"
+            class="memory"
+            @click="$emit('event', id)"
+          >
+            <small
+              >{{ clock(world.events[id - 1].tick) }} ·
+              {{ labels[world.events[id - 1].type] }}</small
+            ><span>{{ world.events[id - 1].text }}</span>
+          </button>
+          <p v-if="!n.memory.length" class="empty">还在等第一次相遇。</p>
+        </div>
+        <details class="knowledge">
+          <summary>TA 最近亲眼见到的人</summary>
+          <p v-for="[id, k] in observations" :key="id">
+            {{ world.npcs[Number(id)].name }} · {{ places[k.loc]
+            }}<small
+              >{{ clock(k.tick) }}{{ k.missed ? " · 再去时已不在" : "" }}</small
+            >
+          </p>
+          <p v-if="!observations.length">还没有新的目击。</p>
+        </details>
       </details>
     </div>
   </aside>

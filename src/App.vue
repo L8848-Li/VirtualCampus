@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from "vue";
+import { computed, nextTick, onUnmounted, ref } from "vue";
 import { createSimulation } from "./controller/simulation.ts";
 import { slots, profiles, places } from "./core/config.ts";
 import { clock } from "./ui/format.ts";
@@ -12,6 +12,7 @@ import TaskBoard from "./components/TaskBoard.vue";
 import EventDialog from "./components/EventDialog.vue";
 import StoryDeck from "./components/StoryDeck.vue";
 import ActivityBoard from "./components/ActivityBoard.vue";
+import { buildStories } from "./core/stories.ts";
 const sim = createSimulation();
 const {
   snapshot: world,
@@ -27,6 +28,20 @@ const {
   canIntervene,
 } = sim;
 const fileInput = ref<HTMLInputElement>();
+const page = ref<"campus" | "stories">("campus");
+const focusStoryId = ref<string | null>(null);
+const highlights = computed(() => buildStories(world.value).slice(0, 2));
+async function openStory(id: string) {
+  page.value = "stories";
+  focusStoryId.value = null;
+  await nextTick();
+  focusStoryId.value = id;
+}
+function showPerson(id: number) {
+  sim.select(id);
+  page.value = "campus";
+  window.scrollTo({ top: 0, behavior: "auto" });
+}
 const day = computed(() =>
   String(Math.min(7, Math.floor(world.value.tick / 4) + 1)).padStart(2, "0"),
 );
@@ -51,7 +66,7 @@ onUnmounted(sim.stop);
   <main>
     <section class="intro">
       <div>
-        <span class="eyebrow">十个人的日常，和一些意料之外的相遇</span>
+        <span class="eyebrow">北京邮电大学 · 沙河校区的校园生活</span>
         <h1>今天，谁会等谁一起走？</h1>
         <p>你可以改变环境。剩下的，让他们自己决定。</p>
       </div>
@@ -64,6 +79,10 @@ onUnmounted(sim.stop);
         >
       </div>
     </section>
+    <nav class="view-switch" aria-label="选择观察视图">
+      <button type="button" :class="{ active: page === 'campus' }" :aria-pressed="page === 'campus'" @click="page = 'campus'">⌂ 校园观察</button>
+      <button type="button" :class="{ active: page === 'stories' }" :aria-pressed="page === 'stories'" @click="page = 'stories'">✎ 人物故事</button>
+    </nav>
     <section class="control-deck" aria-label="模拟控制">
       <div class="playback">
         <button class="primary" :disabled="done" @click="sim.togglePlayback">
@@ -81,6 +100,8 @@ onUnmounted(sim.stop);
           <option value="350">4× 加速</option>
         </select>
       </div>
+      <details class="world-settings">
+        <summary>存档与设置</summary>
       <div class="world-tools">
         <label
           >种子
@@ -97,7 +118,9 @@ onUnmounted(sim.stop);
           @change="importFile"
         />
       </div>
+      </details>
     </section>
+    <p v-if="notice !== '干预改变环境；每个人依然有自己的打算。' && !notice.startsWith('已恢复本机存档')" id="notice" role="status">{{ notice }}</p>
     <div class="progress-row">
       <div class="week-progress" aria-label="七天模拟进度">
         <div
@@ -118,7 +141,7 @@ onUnmounted(sim.stop);
       </div>
       <span>{{ saveState }}</span>
     </div>
-    <div class="watch-strip">
+    <div v-if="view.watched.length" class="watch-strip">
       <span>★ 我的关注 <small>最多 3 人</small></span>
       <div id="watchlist">
         <button
@@ -133,18 +156,16 @@ onUnmounted(sim.stop);
             >{{ places[world.npcs[id].loc] }} ·
             {{ world.npcs[id].interaction }}</span
           ></button
-        ><small v-if="!view.watched.length"
-          >在角色档案点 ☆，留意你关心的人。</small
         >
       </div>
     </div>
-    <div class="workspace">
+    <div v-show="page === 'campus'" class="workspace">
       <section class="world-column">
         <section class="panel map-panel">
           <div class="panelhead">
             <h2>
-              <span class="status-dot"></span>校园观察室
-              <small>LIVE CAMPUS</small>
+              <span class="status-dot"></span>沙河校园
+              <small>校园观察</small>
             </h2>
             <button
               :class="{ active: view.follow }"
@@ -170,8 +191,16 @@ onUnmounted(sim.stop);
             }}</span
             ><span id="count">{{ world.tick }} / 28 时段</span>
           </div>
+          <p class="map-reference">地图使用你提供的 2025 年沙河校区示意图，保留原图标注与署名；五个模拟地点暂以代表点呈现，宿舍统一映射到雁南园。</p>
         </section>
-        <StoryDeck :world="world" :watched="view.watched" @event="detailId = $event" @select="sim.select" />
+        <section class="panel story-glimpse" aria-label="值得留意的故事">
+          <div class="panelhead"><h2>正在发生 <small>一起来看看</small></h2><button class="text-button" @click="page = 'stories'">全部人物故事 →</button></div>
+          <div class="glimpse-cards">
+            <button v-for="story in highlights" :key="story.id" type="button" @click="openStory(story.id)">
+              <small>{{ story.status }}</small><strong>{{ story.title }}</strong><span>{{ story.summary }}</span>
+            </button>
+          </div>
+        </section>
         <section class="panel intervention">
           <div class="panelhead">
             <h2>轻轻拨动世界 <small>A LITTLE NUDGE</small></h2>
@@ -211,19 +240,7 @@ onUnmounted(sim.stop);
               <span>↗</span>
             </button>
           </div>
-          <p id="notice" role="status">{{ notice }}</p>
         </section>
-        <ActivityBoard :world="world" @event="detailId = $event" />
-        <TaskBoard :world="world" @event="detailId = $event" />
-        <div class="observation-grid">
-          <RelationshipGraph
-            :world="world"
-            :selected="view.selected"
-            :direction="view.direction"
-            @select="sim.select"
-            @direction="sim.setDirection"
-          /><CampusWall :world="world" @event="detailId = $event" />
-        </div>
       </section>
       <PersonPanel
         :world="world"
@@ -234,7 +251,15 @@ onUnmounted(sim.stop);
         @event="detailId = $event"
       />
     </div>
-    <StoryFeed
+    <section v-show="page === 'stories'" class="stories-view" aria-label="人物故事视图">
+      <StoryDeck :world="world" :watched="view.watched" :focus-id="focusStoryId" @event="detailId = $event" @select="showPerson" />
+      <ActivityBoard :world="world" @event="detailId = $event" />
+      <TaskBoard :world="world" @event="detailId = $event" />
+      <div class="observation-grid">
+        <RelationshipGraph :world="world" :selected="view.selected" :direction="view.direction" @select="showPerson" @direction="sim.setDirection" />
+        <CampusWall :world="world" @event="detailId = $event" />
+      </div>
+      <StoryFeed
       :world="world"
       :filter="view.filter"
       :selected="view.selected"
@@ -244,7 +269,8 @@ onUnmounted(sim.stop);
         view.filter = $event;
         sim.persist();
       "
-    />
+      />
+    </section>
     <footer>
       <span>七天不是结局，只是一次观察。</span
       ><span>LOCAL SIMULATION · v{{ world.version }} · 无需 API</span>

@@ -1,19 +1,32 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import type { WorldSnapshot } from "../core/types.ts";
 import { buildStories } from "../core/stories.ts";
 import { clock, labels } from "../ui/format.ts";
-const props = defineProps<{ world: WorldSnapshot; watched: number[] }>();
+const props = defineProps<{ world: WorldSnapshot; watched: number[]; focusId?: string | null }>();
 defineEmits<{ event: [id: number]; select: [id: number] }>();
 const filter = ref("all");
 const expanded = ref(false);
+const root = ref<HTMLElement>();
+watch(() => props.focusId, async (id) => {
+  if (!id) return;
+  filter.value = "all";
+  expanded.value = true;
+  await nextTick();
+  const target = [...(root.value?.querySelectorAll<HTMLDetailsElement>(".story-card") || [])]
+    .find((element) => element.dataset.storyId === id);
+  if (target) {
+    target.open = true;
+    target.scrollIntoView({ behavior: "auto", block: "start" });
+  }
+});
 const stories = computed(() => buildStories(props.world).filter((story) =>
   filter.value === "open" ? story.active : filter.value === "watched" ? story.people.some((id) => props.watched.includes(id)) : true));
 const visible = computed(() => expanded.value ? stories.value : stories.value.slice(0, 6));
 const kindLabels = { task: "共同事务", appointment: "一次约定", activity: "一个小愿望", relationship: "彼此的理解" };
 </script>
 <template>
-  <section class="panel story-deck" aria-label="持续追看的故事">
+  <section ref="root" class="panel story-deck" aria-label="持续追看的故事">
     <div class="panelhead">
       <h2>那些还惦记着的事 <small>STORIES TO FOLLOW</small></h2>
       <select v-model="filter" aria-label="故事筛选" @change="expanded = false">
@@ -24,7 +37,7 @@ const kindLabels = { task: "共同事务", appointment: "一次约定", activity
     </div>
     <p class="story-intro">从一个约定、一件共同的事，跟着看它怎样留下后来的影响。</p>
     <div class="story-cards">
-      <details v-for="story in visible" :key="`${world.seed}:${story.id}`" class="story-card" :class="{ ongoing: story.active }">
+      <details v-for="story in visible" :key="`${world.seed}:${story.id}`" class="story-card" :data-story-id="story.id" :class="{ ongoing: story.active }">
         <summary>
           <span class="story-topline"><small>{{ kindLabels[story.kind] }}</small><span>{{ story.status }}</span></span>
           <strong>{{ story.title }}</strong>

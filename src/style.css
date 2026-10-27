@@ -333,269 +333,6 @@ h2 small {
   border-radius: 50%;
   background: #82a275;
 }
-.campus-map {
-  height: 490px;
-  position: relative;
-  overflow: hidden;
-  background-color: #e5edda;
-  background-image: radial-gradient(#bbcdae70 0.8px, transparent 0.8px);
-  background-size: 12px 12px;
-  transition: background-color 1s;
-}
-.campus-map[data-scene="noon"] {
-  background-color: #e9eed6;
-}
-.campus-map[data-scene="afternoon"] {
-  background-color: #ede8d4;
-}
-.campus-map[data-scene="night"] {
-  background-color: #c3d2c8;
-}
-.campus-ground {
-  position: absolute;
-  inset: 0;
-}
-.campus-paths {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  inset: 0;
-}
-.campus-paths path {
-  fill: none;
-  stroke: #f9f8e9;
-  stroke-width: 33;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-.campus-building {
-  position: absolute;
-  width: 28%;
-  height: 33%;
-  border-radius: 8px;
-  background: #f8f5e7;
-  border: 1px solid #ccd6c0;
-  box-shadow: 0 6px 0 #bfcdb580;
-  overflow: hidden;
-}
-.campus-building.dorm {
-  left: 3%;
-  top: 5%;
-}
-.campus-building.classroom {
-  left: 36%;
-  top: 5%;
-}
-.campus-building.library {
-  right: 3%;
-  top: 5%;
-}
-.campus-building.canteen {
-  left: 7%;
-  bottom: 7%;
-  width: 34%;
-}
-.campus-building.club {
-  right: 6%;
-  bottom: 7%;
-  width: 34%;
-}
-.roof {
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 10px;
-  background: #eadac5;
-  font-size: 11px;
-  border-bottom: 1px solid #d6cbb9;
-}
-.classroom .roof {
-  background: #d2dedf;
-}
-.library .roof {
-  background: #dbd9e8;
-}
-.canteen .roof {
-  background: #ecdbc0;
-}
-.club .roof {
-  background: #dbe3bc;
-}
-.roof small {
-  font-size: 9px;
-  color: #86917c;
-}
-.building-floor {
-  position: relative;
-  height: calc(100% - 34px);
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 18px,
-    #dedfc833 18px,
-    #dedfc833 19px
-  );
-}
-.building-sub {
-  display: block;
-  font-size: 6px;
-  letter-spacing: 1.3px;
-  color: #a7ad97;
-  padding: 6px 8px;
-}
-.furniture {
-  display: flex;
-  justify-content: space-evenly;
-  position: absolute;
-  bottom: 9px;
-  width: 100%;
-}
-.furniture i {
-  width: 16%;
-  height: 9px;
-  background: #d4d7bd;
-  border-radius: 2px;
-  box-shadow: 0 2px 0 #c2c8ac;
-}
-.library .furniture i {
-  height: 14px;
-  background: repeating-linear-gradient(
-    90deg,
-    #b8bfac 0,
-    #b8bfac 3px,
-    #d4cbb8 3px,
-    #d4cbb8 6px
-  );
-}
-.dorm .furniture i {
-  background: #d9c9ae;
-}
-.tree {
-  position: absolute;
-  font-size: 32px;
-  color: #97af84;
-  text-shadow: 0 3px 0 #8198723b;
-}
-.t1 {
-  left: 4%;
-  top: 43%;
-}
-.t2 {
-  right: 3%;
-  top: 47%;
-  font-size: 37px;
-}
-.t3 {
-  left: 42%;
-  bottom: 6%;
-}
-.t4 {
-  left: 4%;
-  bottom: 4%;
-  font-size: 25px;
-}
-.quad {
-  position: absolute;
-  top: 44%;
-  left: 43%;
-  width: 14%;
-  text-align: center;
-  color: #9aaa88;
-}
-.quad > span {
-  font-size: 38px;
-  line-height: 1.1;
-}
-.quad small {
-  display: block;
-  font-size: 8px;
-  letter-spacing: 1px;
-  margin-top: 8px;
-}
-.map-people {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.map-person {
-  position: absolute;
-  width: 36px;
-  height: 55px;
-  transform: translate(-50%, -40%);
-  background: none;
-  border: 0;
-  padding: 0;
-  pointer-events: auto;
-  z-index: 3;
-  border-radius: 12px;
-  isolation: isolate;
-}
-.map-person:hover {
-  background: #ffffff60;
-}
-.map-person svg {
-  display: block;
-  width: 32px;
-  height: 38px;
-  margin: auto;
-  filter: drop-shadow(0 1px 0 #fff);
-}
-.person-name {
-  display: block;
-  white-space: nowrap;
-  font-size: 8px;
-  text-align: center;
-  background: #fffdf2d9;
-  border-radius: 3px;
-  padding: 1px 2px;
-  color: #53634c;
-}
-.map-person.selected:before {
-  content: "";
-  position: absolute;
-  inset: -4px -3px 0;
-  border: 1.5px solid #598060;
-  border-radius: 15px;
-  z-index: -1;
-  background: #fff9;
-}
-.map-person.watched:after {
-  content: "★";
-  position: absolute;
-  left: -5px;
-  top: 0;
-  font-size: 10px;
-  color: #b59454;
-}
-.map-person.followed:before {
-  box-shadow: 0 0 0 5px #618e6520;
-}
-.person-mood {
-  position: absolute;
-  right: -6px;
-  top: -5px;
-  background: #fffdf1;
-  border-radius: 5px;
-  font-size: 10px;
-  color: #7c9270;
-  min-width: 12px;
-}
-.follow-bubble {
-  position: absolute;
-  left: 50%;
-  bottom: 10px;
-  transform: translateX(-50%);
-  font-size: 10px;
-  color: #52694f;
-  background: #fffff4e8;
-  border: 1px solid #d4ddc6;
-  padding: 7px 12px;
-  border-radius: 20px;
-  z-index: 5;
-  max-width: 90%;
-  white-space: nowrap;
-}
 .map-caption {
   display: flex;
   align-items: center;
@@ -1125,11 +862,6 @@ th {
 tbody tr:first-child {
   background: #edf3e5;
 }
-@media (min-width: 1500px) {
-  .campus-map {
-    height: 550px;
-  }
-}
 @media (max-width: 1180px) {
   main {
     padding: 26px 24px;
@@ -1162,26 +894,6 @@ tbody tr:first-child {
   .observation-grid {
     gap: 15px;
   }
-  .campus-map {
-    height: 460px;
-  }
-  .roof {
-    font-size: 9px;
-    padding: 6px;
-  }
-  .building-sub {
-    font-size: 5px;
-  }
-  .map-person {
-    width: 30px;
-  }
-  .map-person svg {
-    width: 27px;
-    height: 35px;
-  }
-  .person-name {
-    font-size: 7px;
-  }
 }
 @media (max-width: 950px) {
   .workspace {
@@ -1193,15 +905,6 @@ tbody tr:first-child {
   }
   .person-panel {
     position: static;
-  }
-  .campus-map {
-    height: 425px;
-  }
-  .roof {
-    font-size: 8px;
-  }
-  .roof small {
-    font-size: 7px;
   }
   h2 small {
     font-size: 7px;
@@ -1285,25 +988,6 @@ tbody tr:first-child {
   .observation-grid {
     grid-template-columns: 1fr 1fr;
     gap: 15px;
-  }
-  .campus-map {
-    height: 465px;
-  }
-  .roof {
-    font-size: 10px;
-  }
-  .roof small {
-    font-size: 8px;
-  }
-  .map-person {
-    width: 34px;
-  }
-  .map-person svg {
-    width: 31px;
-    height: 37px;
-  }
-  .person-name {
-    font-size: 8px;
   }
   .intervention-cards {
     grid-template-columns: repeat(3, 1fr);
@@ -1435,31 +1119,6 @@ tbody tr:first-child {
     width: 118px;
     font-size: 10px;
   }
-  .campus-map {
-    height: 410px;
-  }
-  .roof {
-    font-size: 8px;
-  }
-  .roof small {
-    font-size: 7px;
-  }
-  .map-person {
-    width: 26px;
-  }
-  .map-person svg {
-    width: 25px;
-    height: 32px;
-  }
-  .person-name {
-    font-size: 6px;
-  }
-  .quad > span {
-    font-size: 30px;
-  }
-  .tree {
-    font-size: 26px;
-  }
   .intervention-cards {
     gap: 5px;
   }
@@ -1557,6 +1216,7 @@ tbody tr:first-child {
   padding: 16px;
 }
 .story-card {
+  scroll-margin-top: 65px;
   min-width: 0;
   background: #f8f8f1;
   border: 1px solid var(--line);
@@ -1998,4 +1658,101 @@ tbody tr:first-child {
   .task-heading > span {
     margin-top: 0;
   }
+}
+
+/* 沙河校区示意布局与观察视图 */
+.intro { margin-bottom: 16px; }
+.intro h1 { font-size: 25px; margin: 7px 0; }
+.intro .calendar strong { font-size: 42px; }
+.view-switch { display: flex; gap: 8px; margin: 16px 0; }
+.view-switch button { min-height: 42px; padding: 9px 16px; font-size: 13px; }
+.view-switch button.active { background: #3f7057; border-color: #3f7057; color: #fff; }
+.world-settings { position: relative; }
+.world-settings > summary, .profile-details > summary { cursor: pointer; color: #496d55; font-size: 12px; padding: 9px 12px; border: 1px solid #d9e1d2; border-radius: 7px; background: #fdfef8; }
+.world-settings[open] .world-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; padding: 10px 0 0; }
+#notice { color: #687c69; margin: 8px 0 0; font-size: 11px; }
+.profile-details { margin-top: 16px; }
+.profile-details > summary { padding: 10px; }
+.profile-details > h4 { margin-top: 17px; }
+.story-glimpse .glimpse-cards { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; padding: 14px; }
+.glimpse-cards > button { display: flex; flex-direction: column; gap: 7px; text-align: left; align-items: flex-start; min-width: 0; padding: 13px; background: #f4f7ed; }
+.glimpse-cards small { color: #71876b; font-size: 11px; }
+.glimpse-cards strong { font-size: 13px; font-weight: 600; }
+.glimpse-cards span { color: #687c69; font-size: 12px; line-height: 1.6; }
+.map-reference { margin: 0; padding: 0 16px 12px; color: #6e806d; font-size: 11px; }
+.stories-view { max-width: 1100px; margin: 0 auto; }
+@media (max-width: 760px) {
+  .control-deck { align-items: stretch; }
+  .world-settings[open] .world-tools { justify-content: flex-start; }
+  .profile-details { grid-column: 1 / -1; }
+  .intro h1 { font-size: 22px; }
+  .map-caption { font-size: 11px; }
+}
+@media (max-width: 460px) {
+  .story-glimpse .glimpse-cards { grid-template-columns: 1fr; }
+  .view-switch button { flex: 1; }
+  .intro .calendar strong { font-size: 35px; }
+}
+.person-panel .identity p, .person-panel .quirk, .person-panel .thought p, .person-panel .relationship-row, .person-panel .memory, .person-panel .knowledge p { font-size: 12px; }
+.person-panel .identity .eyebrow, .person-panel .tags span, .person-panel .thought small, .person-panel .thought strong, .person-panel .memory small, .person-panel .knowledge small, .person-panel .minor-stats, .person-panel .stat, .person-panel .stat b { font-size: 11px; }
+.person-panel h4 { font-size: 13px; }
+.person-panel h4 small, .person-panel .relationship-row small { font-size: 11px; }
+.world-settings label, .world-settings label input, .text-button { font-size: 12px; }
+.view-switch { position: sticky; top: 0; z-index: 8; padding: 5px 0; margin: 8px 0; background: #f0f3e9; }
+.progress-row { margin: 10px 0 14px; }
+@media (max-width: 760px) {
+  .app-header { height: 56px; }
+  main { padding-top: 14px; }
+  .intro { margin-bottom: 8px; }
+  .intro p { display: none; }
+  .control-deck { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .world-settings[open] { flex-basis: 100%; }
+  .world-settings > summary { padding: 8px; }
+}
+
+/* 原图按原比例呈现；地点的人物汇总由模拟状态驱动 */
+.campus-viewer { background: #f7f9f2; }
+.map-tools { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; }
+.map-tools strong { display: block; font-size: 14px; font-weight: 600; }
+.map-tools small { display: block; margin-top: 3px; color: #6b806b; font-size: 12px; }
+.zoom-controls { display: flex; align-items: center; gap: 6px; }
+.zoom-controls button { min-width: 37px; min-height: 37px; padding: 6px 10px; font-size: 14px; }
+.zoom-controls button:last-child { font-size: 12px; }
+.zoom-controls span { min-width: 39px; text-align: center; color: #536b55; font-size: 12px; font-variant-numeric: tabular-nums; }
+.shahe-viewport { position: relative; width: 100%; aspect-ratio: 2132 / 1600; overflow: hidden; background: #d9f1f2; user-select: none; touch-action: none; }
+.shahe-viewport.pannable { cursor: grab; }
+.shahe-viewport.dragging { cursor: grabbing; }
+.shahe-viewport:focus-visible { outline: 3px solid #c7a572; outline-offset: -3px; }
+.shahe-map-stage { position: absolute; inset: 0; transform-origin: 0 0; }
+.shahe-reference { display: block; width: 100%; height: 100%; object-fit: fill; -webkit-user-drag: none; pointer-events: none; }
+.location-marker { position: absolute; display: flex; align-items: center; gap: 3px; z-index: 2; padding: 3px 6px; min-height: 35px; border: 2px solid #fff; border-radius: 24px; background: #315f4c; color: #fff; box-shadow: 0 2px 7px #1a382c75; white-space: nowrap; transform-origin: 0 0; }
+.location-marker:hover, .location-marker.active { background: #234a3b; color: #fff; border-color: #f8d69b; }
+.location-marker.watched { box-shadow: 0 0 0 3px #e0b967, 0 2px 7px #1a382c75; }
+.marker-avatar { display: flex; width: 23px; height: 26px; align-items: center; justify-content: center; }
+.marker-avatar svg { width: 22px; height: 25px; }
+.marker-count { font-size: 11px; line-height: 1; }
+.map-help { margin: 0; padding: 10px 16px 2px; color: #697f6b; font-size: 12px; }
+.place-list { display: flex; flex-wrap: wrap; gap: 7px; padding: 10px 16px 15px; }
+.place-list button { padding: 7px 10px; font-size: 12px; }
+.place-list small { color: #6e806c; margin-left: 3px; font-size: 11px; }
+.place-list button.active { background: #e3eddb; color: #315f4c; border-color: #8da88d; }
+.place-detail { padding: 15px 16px; border-top: 1px solid #e2e7dc; background: #fcfdf8; }
+.place-detail-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.place-detail-head strong { display: block; font-size: 14px; }
+.place-detail-head small { display: block; margin-top: 4px; color: #738871; font-size: 12px; }
+.place-roster { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.place-roster button { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 8px; text-align: left; background: #f4f7ee; }
+.place-roster button.selected { border-color: #719377; background: #e6efdf; }
+.place-roster button > span:nth-child(2) { min-width: 0; }
+.place-roster button strong { display: block; font-size: 12px; }
+.place-roster button small { display: block; white-space: normal; overflow-wrap: anywhere; color: #6e806c; font-size: 11px; line-height: 1.5; margin-top: 4px; }
+.place-avatar { display: flex; justify-content: center; align-items: center; width: 32px; height: 36px; flex: 0 0 auto; border-radius: 8px; background: #e3ebda; }
+.place-avatar svg { width: 28px; height: 32px; }
+.place-empty { margin: 12px 0 0; color: #6e806c; font-size: 12px; }
+@media (min-width: 761px) {
+  .app-header { height: 62px; }
+  main { padding-top: 16px; }
+  .intro { margin-bottom: 8px; }
+  .intro h1 { font-size: 22px; margin: 4px 0; }
+  .intro .calendar strong { font-size: 36px; }
 }
