@@ -4,6 +4,7 @@ import { createSimulation } from "./controller/simulation.ts";
 import { slots, profiles, places } from "./core/config.ts";
 import type { LocationId } from "./core/types.ts";
 import { clock } from "./ui/format.ts";
+import BuildingScene from "./components/BuildingScene.vue";
 import CampusMap from "./components/CampusMap.vue";
 import PersonPanel from "./components/PersonPanel.vue";
 import RelationshipGraph from "./components/RelationshipGraph.vue";
@@ -67,7 +68,7 @@ onUnmounted(sim.stop);
   <header class="app-header">
     <a class="brand" href="#"
       ><span>✳</span><b>赛博校园<small>THE CAMPUS OBSERVATORY</small></b></a
-    ><span class="edition">七日观察 / VOL. 005</span
+    ><span class="edition">七日观察 / VOL. 006</span
     ><button class="text-button" @click="helpOpen = true">玩法与机制 ↗</button>
   </header>
   <main>
@@ -267,12 +268,7 @@ onUnmounted(sim.stop);
           <span class="context-kicker">校园地点 / PLACE</span>
           <h2>{{ places[selectedPlace] }}</h2>
           <p>{{ placePeople.length ? `此刻有 ${placePeople.length} 人在这里，点开一个人看看。` : '此刻还没有人，时间向前走，也许会有人经过。' }}</p>
-          <div class="context-section"><h3>在这里的人 <span>{{ placePeople.length }}</span></h3>
-            <button v-for="person in placePeople" :key="person.id" class="context-person" @click="selectPerson(person.id)">
-              <span><strong>{{ person.name }}</strong><small>{{ person.action }}</small></span><b>→</b>
-            </button>
-            <p v-if="!placePeople.length" class="context-empty">安静的一刻</p>
-          </div>
+          <BuildingScene :place="selectedPlace" :people="placePeople" @select="selectPerson" />
         </div>
         <template v-else>
           <button class="back-link side-back" @click="selectedPlace !== null ? sideView = 'place' : sideView = 'overview'">← {{ selectedPlace !== null ? places[selectedPlace] : '校园概览' }}</button>
@@ -281,7 +277,7 @@ onUnmounted(sim.stop);
         </template>
       </aside>
     </div>
-    <section v-show="page === 'stories'" class="stories-view" aria-label="人物故事视图">
+    <section v-if="page === 'stories'" class="stories-view" aria-label="人物故事视图">
       <StoryDeck :world="world" :watched="view.watched" :focus-id="focusStoryId" @event="detailId = $event" @select="showPerson" />
       <ActivityBoard :world="world" @event="detailId = $event" />
       <TaskBoard :world="world" @event="detailId = $event" />

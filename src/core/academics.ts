@@ -10,7 +10,8 @@ export function courseAt(tick: number) {
   return courses.find((course) => (course.days as readonly number[]).includes(Math.floor(tick / 4)));
 }
 export function attendance(events: CampusEvent[], person: number, tick: number) {
+  const attendedTicks = new Set(events.filter((event) => event.type === 'action' && event.people[0] === person && event.data.courseId).map((event) => `${event.tick}:${event.data.courseId}`));
   return Array.from({ length: tick }, (_, t) => ({ tick: t, course: courseAt(t) }))
     .filter((item) => item.course)
-    .map((item) => ({ ...item, attended: events.some((event) => event.tick === item.tick && event.type === 'action' && event.people[0] === person && event.data.courseId === item.course!.id) }));
+    .map((item) => ({ ...item, attended: attendedTicks.has(`${item.tick}:${item.course?.id}`) }));
 }

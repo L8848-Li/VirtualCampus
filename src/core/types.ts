@@ -1,6 +1,10 @@
 export type LocationId = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
 export type InterventionKind = "rooms" | "groups" | "party";
 export type EventType =
+  | "homework_assigned"
+  | "homework_progress"
+  | "homework_completed"
+  | "homework_expired"
   | "system"
   | "action"
   | "intervention"
@@ -66,10 +70,11 @@ export interface Knowledge extends Sighting {
   routine?: Partial<Record<number, Sighting>>;
 }
 export interface Intent {
-  kind: "seek" | "repair" | "appointment" | "task" | "activity_prepare" | "activity_attend";
+  kind: "seek" | "repair" | "appointment" | "task" | "activity_prepare" | "activity_attend" | "homework";
   target?: number;
   taskId?: string;
   activityId?: string;
+  homeworkId?: string;
   evidence: number[];
 }
 export interface AgentState {
@@ -113,6 +118,7 @@ export interface ActionOption {
   target?: number;
   taskId?: string;
   activityId?: string;
+  homeworkId?: string;
   evidence?: number[];
   knownTick?: number;
   habit?: number;
@@ -204,6 +210,7 @@ export interface DecisionContext {
   memories: CampusEvent[];
   roommates: number[];
   tasks?: CampusTask[];
+  homework?: Homework[];
   activities?: ActivityOffer[];
 }
 export interface Intervention {
@@ -229,6 +236,7 @@ export interface WorldSnapshot {
   party: number;
   inputs: Intervention[];
   tasks: CampusTask[];
+  homework: Homework[];
   activities: CampusActivity[];
 }
 export type EventFilter =
@@ -335,4 +343,9 @@ export interface CampusActivity {
   attendees: number[];
   contributions: Record<number, number>;
   lastEvent: number;
+}
+
+export interface Homework {
+  id: string; owner: number; title: string; courseId: string; deadline: number;
+  progress: number; required: number; status: "open" | "completed" | "expired"; lastEvent: number;
 }

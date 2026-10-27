@@ -1,3 +1,4 @@
+import { assignHomework, expireHomework, workHomework } from "./core/homework.ts";
 import { courseAt } from "./core/academics.ts";
 import { active, preparePlans, finishPlan } from "./core/plans.ts";
 import { createTasks, expireTasks, workTasks } from "./core/tasks.ts";
@@ -17,6 +18,7 @@ import type {
   SaveData,
   CampusTask,
   CampusActivity,
+  Homework,
 } from "./core/types.ts";
 const {
   ENGINE_VERSION,
@@ -41,6 +43,7 @@ export class World {
   declare party: number;
   declare tasks: CampusTask[];
   declare activities: CampusActivity[];
+  declare homework: Homework[];
   declare environment: Record<InterventionKind, number | null>;
   declare npcs: AgentState[];
   constructor(seed: string | number = "campus-2026") {
@@ -57,6 +60,7 @@ export class World {
     this.party = -1;
     this.environment = { rooms: null, groups: null, party: null };
     this.activities = [];
+    this.homework = [];
     this.npcs = profiles.map<AgentState>((p, id) => ({
       id,
       name: p.name,
@@ -224,6 +228,7 @@ export class World {
       n.social = clamp(n.social + 11);
     }
     expireTasks(this);
+    expireHomework(this);
     preparePlans(this);
     const decisions = this.npcs.map((n) =>
       chooseAction(
@@ -233,6 +238,7 @@ export class World {
           slot: this.tick % 4,
           party: this.party === this.tick,
           tasks: this.tasks.filter((t) => t.members.includes(n.id)),
+          homework: this.homework.filter((h) => h.owner === n.id),
           activities: n.activityInvitations.map((invitation) => ({ ...invitation,
             ownPreparation: this.activities.find((a) => a.id === invitation.activityId)?.contributions[n.id] || 0 })),
           memories: n.memory.map((id) => this.events[id - 1]),
@@ -298,6 +304,7 @@ export class World {
             target: chosen.target,
             taskId: chosen.taskId,
             activityId: chosen.activityId,
+            homeworkId: chosen.homeworkId,
             evidence: chosen.evidence,
           }
         : null;
@@ -315,6 +322,7 @@ export class World {
           courseId: chosen.action.startsWith("上") ? courseAt(this.tick)?.id : undefined,
           taskId: chosen.taskId,
           activityId: chosen.activityId,
+          homeworkId: chosen.homeworkId,
           planId: n.plan && ((chosen.kind === "appointment" && n.plan.kind === "appointment") ||
             (chosen.kind === "task" && n.plan.taskId === chosen.taskId)) ? n.plan.id : undefined,
           target: chosen.target ?? null,
@@ -361,6 +369,8 @@ export class World {
         }
       }
     workTasks(this);
+    workHomework(this);
+    if (this.tick === 0) this.homework = assignHomework(this);
     workActivities(this);
     resolveActivities(this);
     runSocial(this);

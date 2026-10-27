@@ -16,6 +16,7 @@ defineEmits<{
   event: [id: number];
 }>();
 const n = computed(() => props.world.npcs[props.selected]);
+const homework = computed(() => props.world.homework.filter((item) => item.owner === props.selected));
 const classHistory = computed(() => attendance(props.world.events, props.selected, props.world.tick));
 const nextClass = computed(() => Array.from({ length: 28 - props.world.tick }, (_, i) => props.world.tick + i)
   .map((tick) => ({ tick, course: courseAt(tick) })).find((item) => item.course));
@@ -99,6 +100,12 @@ const beliefs = computed(() => [...n.value.beliefs].sort((a, b) =>
         <p v-if="nextClass">下次：{{ clock(nextClass.tick) }} · {{ nextClass.course?.name }}</p>
         <p v-else>本周课程已经结束。</p>
         <p>已上 {{ classHistory.filter((item) => item.attended).length }} 次 · 未到 {{ classHistory.filter((item) => !item.attended).length }} 次</p>
+        <div v-for="item in homework" :key="item.id" class="homework-item">
+          <strong>{{ item.title }}</strong><span>{{ item.status === 'completed' ? '已提交' : item.status === 'expired' ? '未按时完成' : `进行中 ${item.progress}/${item.required}` }}</span>
+          <p>截止 {{ clock(item.deadline) }}</p>
+          <button class="text-button" @click="$emit('event', item.lastEvent)">查看经过 →</button>
+        </div>
+        <p v-if="!homework.length">课程练习将在第一天上课后发布。</p>
         <details><summary>查看本周课表与出勤</summary>
           <p v-for="course in courses" :key="course.id">{{ course.name }} · 计划 {{ course.credits }} 学分<br />第 {{ course.days.map((day) => day + 1).join('、') }} 天清晨 · 公共教学楼</p>
           <p v-for="item in classHistory" :key="item.tick">{{ clock(item.tick) }} · {{ item.course?.name }} · {{ item.attended ? '已上课' : '未到课' }}</p>

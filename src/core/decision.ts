@@ -89,6 +89,12 @@ export function chooseAction(
       evidence: [task.lastEvent],
     });
   }
+  for (const homework of context.homework || []) {
+    if (homework.status !== "open" || homework.owner !== n.id) continue;
+    const urgency = Math.max(0, 10 - (homework.deadline - tick)) * 2.4;
+    options.push({ loc: n.id % 2 ? 8 : 3, action: "完成课程练习", kind: "homework", homeworkId: homework.id,
+      base: 41 + n.ambition * 25 + urgency, reason: `${homework.title}还未完成，临近截止会提高优先级`, evidence: [homework.lastEvent] });
+  }
   // Offers are copied from invitations this agent actually received. They do
   // not expose the live whereabouts, choices or private knowledge of guests.
   for (const activity of context.activities || []) {

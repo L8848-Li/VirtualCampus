@@ -1798,3 +1798,19 @@ body { background: #eeeee5; color: #34473d; }
 .academic-card h4 { margin: 7px 0; font-size: 14px; }
 .academic-card p { margin: 4px 0; color: #6a7b6a; }
 .academic-card summary { margin-top: 9px; color: #53765d; cursor: pointer; font-size: 12px; }
+.indoor-scene { margin-top: 24px; border-top: 1px solid #e3e5da; padding-top: 19px; }
+.indoor-title strong, .indoor-title small { display: block; }
+.indoor-title strong { font-size: 13px; }
+.indoor-title small { margin-top: 5px; color: #8c988a; font-size: 11px; }
+.indoor-areas { display: grid; gap: 10px; margin-top: 15px; }
+.indoor-area { padding: 12px; border-radius: 10px; background: #eef1e6; border: 1px solid #e0e6d8; }
+.indoor-area-name { color: #667e65; font-size: 12px; font-weight: 600; }
+.indoor-area-name small { float: right; color: #98a997; font-weight: 400; }
+.indoor-people { display: grid; gap: 6px; margin-top: 8px; }
+.indoor-people button { display: flex; align-items: center; gap: 9px; text-align: left; background: #fafbf5; border: 0; padding: 7px; }
+.indoor-people button strong, .indoor-people button small { display: block; }
+.indoor-people button small { margin-top: 3px; color: #859383; font-size: 11px; }
+.indoor-avatar { width: 32px; height: 36px; border-radius: 8px; background: #e3eadb; flex: none; }
+.indoor-avatar svg { width: 100%; height: 100%; }
+.homework-item { margin-top: 12px; padding-top: 10px; border-top: 1px solid #dce2d3; }
+.homework-item > span { float: right; color: #68856c; font-size: 11px; }

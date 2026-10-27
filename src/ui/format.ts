@@ -8,6 +8,10 @@ import type {
 export const clock = (tick: number) =>
   `第 ${Math.min(7, Math.floor(tick / 4) + 1)} 天 · ${slots[tick % 4]}`;
 export const labels: Record<EventType, string> = {
+  homework_assigned: "课程作业",
+  homework_progress: "作业进展",
+  homework_completed: "作业完成",
+  homework_expired: "作业截止",
   friendship: "新默契",
   crush: "心动",
   misunderstanding: "误解",

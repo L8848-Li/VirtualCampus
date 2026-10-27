@@ -1,7 +1,8 @@
 import { computed, reactive, ref, shallowRef } from "vue";
 import { World, TOTAL_TICKS, MAX_INPUTS } from "../engine.ts";
 import type { WorldSnapshot, ViewState } from "../core/types.ts";
-const STORAGE_KEY = "virtualcampus.save.v5";
+const STORAGE_KEY = import.meta.env.DEV && new URLSearchParams(location.search).has("perf")
+  ? "virtualcampus.performance-test.v6" : "virtualcampus.save.v6";
 const isId = (id: unknown): id is number =>
   Number.isInteger(id) && Number(id) >= 0 && Number(id) < 10;
 export function createSimulation() {
@@ -20,6 +21,7 @@ export function createSimulation() {
         party: world.party,
         inputs: world.inputs,
         tasks: world.tasks,
+        homework: world.homework,
         activities: world.activities,
       }),
     );
