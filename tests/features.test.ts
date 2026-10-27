@@ -44,7 +44,7 @@ test("a negative relationship can change the chosen activity and leaves an expla
   assert.equal(before.loc, 4);
   n.rel[1] = { aff: -80, trust: -50, crush: 0 };
   const after = chooseAction(n, context(n), () => 0);
-  assert.equal(after.chosen.loc, 2);
+  assert.notEqual(after.chosen.loc, before.loc);
   assert(after.options.find((a) => a.loc === 4)!.evidence.includes(1));
 });
 

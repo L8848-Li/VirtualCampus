@@ -11,21 +11,28 @@ const props = defineProps<{
   watched: number[];
   follow: boolean;
   duration: number;
+  selectedPlace: LocationId | null;
 }>();
-const emit = defineEmits<{ select: [id: number] }>();
+const emit = defineEmits<{ place: [id: LocationId] }>();
 const mapImage = `${import.meta.env.BASE_URL}maps/shahe-campus-2025.jpg`;
 // Positions are percentages of the full, unmodified 2132 × 1600 source image.
 const locations: { id: LocationId; name: string; x: number; y: number }[] = [
-  { id: 0, name: "学生公寓（雁南园）", x: 34.2, y: 77.1 },
+  { id: 0, name: "雁南园学生公寓", x: 34.2, y: 77.1 },
   { id: 1, name: "公共教学楼", x: 48.4, y: 67.1 },
   { id: 2, name: "学生餐厅", x: 45.3, y: 87.4 },
   { id: 3, name: "图书馆", x: 65.9, y: 46.6 },
   { id: 4, name: "学生活动中心", x: 52.6, y: 50.5 },
+  { id: 6, name: "风味餐厅", x: 44, y: 41 },
+  { id: 7, name: "运动场", x: 24.1, y: 45 },
+  { id: 8, name: "教学实验综合楼", x: 65.6, y: 67 },
+  { id: 9, name: "智慧教学楼", x: 81.3, y: 62 },
+  { id: 10, name: "理学楼", x: 82, y: 88 },
+  { id: 11, name: "综合办公楼", x: 52.5, y: 40 },
 ];
 const viewport = ref<HTMLElement>();
 const zoom = ref(MIN_ZOOM);
 const pan = ref<Point>({ x: 0, y: 0 });
-const selectedLocation = ref<LocationId | null>(null);
+
 const dragging = ref(false);
 let dragStart: { pointer: number; x: number; y: number; pan: Point } | null = null;
 let observer: ResizeObserver | undefined;
@@ -34,7 +41,7 @@ const groups = computed(() => locations.map((location) => {
   const featured = members.find((n) => n.id === props.selected) || members[0];
   return { ...location, members, featured };
 }));
-const currentGroup = computed(() => groups.value.find((group) => group.id === selectedLocation.value));
+
 const size = (): Size => ({ width: viewport.value?.clientWidth || 0, height: viewport.value?.clientHeight || 0 });
 function setZoom(value: number, pivot?: Point) {
   const dimensions = size();
@@ -48,7 +55,8 @@ function resetMap() { zoom.value = MIN_ZOOM; pan.value = { x: 0, y: 0 }; }
 function focusLocation(id: LocationId, scrollToMap = false) {
   const dimensions = size();
   if (!dimensions.width || !dimensions.height) return;
-  const location = locations[id];
+  const location = locations.find((item) => item.id === id);
+  if (!location) return;
   zoom.value = Math.max(zoom.value, 2);
   pan.value = clampPan({ x: dimensions.width * (0.5 - location.x / 100 * zoom.value),
     y: dimensions.height * (0.5 - location.y / 100 * zoom.value) }, zoom.value, dimensions);
@@ -86,7 +94,6 @@ function moveWithKeyboard(event: KeyboardEvent) {
 }
 watch(() => [props.follow, props.selected, props.world.npcs[props.selected]?.loc] as const, ([follow, , location]) => {
   if (follow && location !== undefined) {
-    selectedLocation.value = location;
     if (zoom.value > MIN_ZOOM) focusLocation(location);
   }
 }, { immediate: true });
@@ -116,35 +123,17 @@ onUnmounted(() => observer?.disconnect());
       @wheel="onWheel" @pointerdown="startDrag" @pointermove="moveDrag" @pointerup="endDrag" @pointercancel="endDrag" @lostpointercapture="cancelDrag" @keydown="moveWithKeyboard">
       <div class="shahe-map-stage" :style="{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }">
         <img class="shahe-reference" :src="mapImage" draggable="false" alt="北京邮电大学沙河校区示意图，北邮人团队 2025 年 8 月制" />
-        <button v-for="group in groups.filter((item) => item.members.length > 0)" :key="group.id" type="button" class="location-marker"
-          :class="{ active: selectedLocation === group.id, watched: group.members.some((n) => watched.includes(n.id)) }"
+        <button v-for="group in groups" :key="group.id" type="button" class="location-marker"
+          :class="{ active: selectedPlace === group.id, watched: group.members.some((n) => watched.includes(n.id)) }"
           :style="{ left: `${group.x}%`, top: `${group.y}%`, transform: `scale(${1 / zoom}) translate(-50%, -50%)` }"
           :aria-label="`${group.name}，${group.members.length} 人，展开在场名单`"
-          :aria-pressed="selectedLocation === group.id" :title="`${group.name} · ${group.members.length} 人`"
-          @click.stop="selectedLocation = group.id">
+          :aria-pressed="selectedPlace === group.id" :title="`${group.name} · ${group.members.length} 人`"
+          @click.stop="emit('place', group.id)">
           <span v-if="group.featured" class="marker-avatar" :style="{ '--c': profiles[group.featured.id].color }"><AvatarIcon :id="group.featured.id" /></span>
-          <span class="marker-count">{{ group.members.length }} 人</span>
+          <span class="marker-count">{{ group.members.length ? `${group.members.length} 人` : "·" }}</span>
         </button>
       </div>
     </div>
     <p class="map-help">放大后拖动地图；按住 Ctrl 或 Command 滚动也可缩放。圈点上的人数会随人物行动变化。</p>
-    <div class="place-list" aria-label="模拟地点">
-      <button v-for="group in groups" :key="group.id" type="button" :class="{ active: selectedLocation === group.id }"
-        :aria-pressed="selectedLocation === group.id" @click="selectedLocation = group.id">
-        {{ group.name }} <small>{{ group.members.length }} 人</small>
-      </button>
-    </div>
-    <section v-if="currentGroup" class="place-detail" :aria-label="`${currentGroup.name}在场人物`">
-      <div class="place-detail-head"><div><strong>{{ currentGroup.name }}</strong><small>此刻 {{ currentGroup.members.length }} 人</small></div>
-        <div><button type="button" class="text-button" @click="focusLocation(currentGroup.id, true)">定位并放大</button><button type="button" class="text-button" aria-label="收起地点名单" @click="selectedLocation = null">收起 ×</button></div></div>
-      <div v-if="currentGroup.members.length" class="place-roster">
-        <button v-for="person in currentGroup.members" :key="person.id" type="button" :class="{ selected: selected === person.id }" @click="emit('select', person.id)">
-          <span class="place-avatar" :style="{ '--c': profiles[person.id].color }"><AvatarIcon :id="person.id" /></span>
-          <span><strong>{{ person.name }}</strong><small>{{ person.action }} · {{ person.interaction }}</small></span>
-          <span v-if="watched.includes(person.id)" aria-label="已关注">★</span>
-        </button>
-      </div>
-      <p v-else class="place-empty">这里暂时没有人物。过一会儿再来看看。</p>
-    </section>
   </div>
 </template>

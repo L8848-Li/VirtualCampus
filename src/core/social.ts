@@ -143,7 +143,7 @@ export function runSocial(world: World) {
     const b = world.npcs[a.intent.target];
     const colocated =
       b.loc === a.loc &&
-      (a.loc !== 0 || world.rooms[a.id] === world.rooms[b.id]);
+      ((a.loc !== 0 && a.loc !== 5) || world.rooms[a.id] === world.rooms[b.id]);
     if (a.intent.kind === "appointment") {
       const met = resolveAppointment(world, a, b, colocated);
       paired.add(a.id);
@@ -224,7 +224,7 @@ export function runSocial(world: World) {
         b.id !== a.id &&
         !paired.has(b.id) &&
         b.loc === a.loc &&
-        (a.loc !== 0 || world.rooms[a.id] === world.rooms[b.id]),
+        ((a.loc !== 0 && a.loc !== 5) || world.rooms[a.id] === world.rooms[b.id]),
     );
     if (!peers.length) continue;
     // Existing affection biases whom to approach; no forced pairing by story.

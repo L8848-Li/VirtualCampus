@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { attendance, courses, courseAt } from "../core/academics.ts";
 import { places, profiles } from "../core/config.ts";
 import type { WorldSnapshot } from "../core/types.ts";
 import { clock, labels, relationLabel } from "../ui/format.ts";
@@ -15,6 +16,9 @@ defineEmits<{
   event: [id: number];
 }>();
 const n = computed(() => props.world.npcs[props.selected]);
+const classHistory = computed(() => attendance(props.world.events, props.selected, props.world.tick));
+const nextClass = computed(() => Array.from({ length: 28 - props.world.tick }, (_, i) => props.world.tick + i)
+  .map((tick) => ({ tick, course: courseAt(tick) })).find((item) => item.course));
 const relationships = computed(() =>
   n.value.rel
     .map((r, i) => ({ r, i }))
@@ -43,25 +47,8 @@ const beliefs = computed(() => [...n.value.beliefs].sort((a, b) =>
 <template>
   <aside class="panel person-panel">
     <div class="panelhead">
-      <h2>他们是谁 <small>TEN LITTLE WORLDS</small></h2>
+      <h2>人物观察 <small>PERSON</small></h2>
       <span>{{ String(selected + 1).padStart(2, "0") }} / 10</span>
-    </div>
-    <div id="roster">
-      <button
-        v-for="person in world.npcs"
-        :key="person.id"
-        class="roster-person"
-        :class="{ selected: person.id === selected }"
-        :aria-label="`选择${person.name}`"
-        :aria-pressed="person.id === selected"
-        @click="$emit('select', person.id)"
-      >
-        <span class="portrait" :style="{ '--c': profiles[person.id].color }"
-          ><AvatarIcon :id="person.id" /></span
-        ><span
-          >{{ person.name }}<small>{{ places[person.loc] }}</small></span
-        >
-      </button>
     </div>
     <div id="profile">
       <div class="identity">
@@ -106,6 +93,18 @@ const beliefs = computed(() => [...n.value.beliefs].sort((a, b) =>
           它是怎么开始的 ↗
         </button>
       </div>
+      <section class="academic-card">
+        <small>教学周 · 模拟课程</small>
+        <h4>学业日程</h4>
+        <p v-if="nextClass">下次：{{ clock(nextClass.tick) }} · {{ nextClass.course?.name }}</p>
+        <p v-else>本周课程已经结束。</p>
+        <p>已上 {{ classHistory.filter((item) => item.attended).length }} 次 · 未到 {{ classHistory.filter((item) => !item.attended).length }} 次</p>
+        <details><summary>查看本周课表与出勤</summary>
+          <p v-for="course in courses" :key="course.id">{{ course.name }} · 计划 {{ course.credits }} 学分<br />第 {{ course.days.map((day) => day + 1).join('、') }} 天清晨 · 公共教学楼</p>
+          <p v-for="item in classHistory" :key="item.tick">{{ clock(item.tick) }} · {{ item.course?.name }} · {{ item.attended ? '已上课' : '未到课' }}</p>
+          <p>计划学分仅表示修读安排；成绩与实际取得学分尚未结算。</p>
+        </details>
+      </section>
       <details class="profile-details">
         <summary>更多档案、关系与记忆</summary>
         <div class="needs">

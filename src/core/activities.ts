@@ -4,7 +4,7 @@ import { invitationDecision } from "./invitations.ts";
 import { clamp } from "./decision.ts";
 
 const together = (world: World, a: AgentState, b: AgentState) =>
-  a.loc === b.loc && (a.loc !== 0 || world.rooms[a.id] === world.rooms[b.id]);
+  a.loc === b.loc && ((a.loc !== 0 && a.loc !== 5) || world.rooms[a.id] === world.rooms[b.id]);
 
 export function inviteToActivity(world: World, activity: CampusActivity, guest: AgentState, parent: number) {
   const organizer = world.npcs[activity.organizer];

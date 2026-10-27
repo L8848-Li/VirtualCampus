@@ -26,7 +26,7 @@ const report = {
 };
 fs.mkdirSync("docs/reports", { recursive: true });
 fs.writeFileSync(
-  "docs/reports/behavior-v04.json",
+  "docs/reports/behavior-v05.json",
   JSON.stringify(report, null, 2) + "\n",
 );
 console.table(
@@ -34,4 +34,4 @@ console.table(
     Object.entries(metrics).filter(([key]) => key !== "eventTypes"),
   ),
 );
-console.log("Saved docs/reports/behavior-v04.json");
+console.log("Saved docs/reports/behavior-v05.json");

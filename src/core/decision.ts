@@ -1,3 +1,4 @@
+import { courseAt } from "./academics.ts";
 import { active } from "./plans.ts";
 import type {
   AgentState,
@@ -31,9 +32,9 @@ export function chooseAction(
     },
     {
       loc: 1,
-      action: "上课",
-      base: (slot === 0 ? 64 : 8) + n.ambition * 20,
-      reason: "清晨的课程安排与学业目标",
+      base: (courseAt(tick) ? 64 : 2) + n.ambition * 20,
+      reason: courseAt(tick) ? `今天有${courseAt(tick)!.name}，也要考虑自己的状态` : "想去教学楼整理笔记",
+      action: courseAt(tick) ? `上${courseAt(tick)!.name}` : "整理课堂笔记",
     },
     {
       loc: 3,
@@ -50,6 +51,14 @@ export function chooseAction(
         : "社交需求与兴趣推动参加社团",
     },
   ];
+  options.push(
+    { loc: 6, action: "吃风味餐", base: n.hunger - 5 + (slot === 1 ? 8 : 0), reason: "想换个餐厅吃饭" },
+    { loc: 7, action: "在运动场活动", base: 27 + n.social * 0.4 + n.ext * 18 + (slot === 2 ? 14 : 0), reason: "想活动身体，也许能遇见同学" },
+    { loc: 8, action: "在实验楼练习", base: 29 + n.ambition * 30 + (n.interest === "机器人制作" ? 16 : 0), reason: "想用实践巩固所学" },
+    { loc: 9, action: "在智慧教学楼自习", base: 29 + n.ambition * 30, reason: "想找一处安静的学习空间" },
+    { loc: 10, action: "在理学楼学习", base: 27 + n.ambition * 30 + (n.interest === "数学谜题" ? 14 : 0), reason: "想花时间思考学习问题" },
+    { loc: 11, action: "到综合办公楼办事", base: 23 + (tick % 7 === n.id % 7 ? 32 : 0), reason: "抽空处理校园事务" },
+  );
   const plan = active(n.plan) ? n.plan : null;
   if (
     plan?.kind === "appointment" &&
@@ -110,7 +119,7 @@ export function chooseAction(
   for (const [id, knowledge] of seen) {
     const target = Number(id),
       relation = n.rel[target];
-    if (knowledge.loc === 0 && !roommates.includes(target)) continue;
+    if ((knowledge.loc === 0 || knowledge.loc === 5) && !roommates.includes(target)) continue;
     const evidence = memories
       .filter((e) => e.people.includes(target))
       .map((e) => e.id);
@@ -164,7 +173,7 @@ export function chooseAction(
     }
     // Meeting friends cannot remove the physiological cost of an outing.
     o.exhaustion = o.kind && n.energy < 25 ? 38 : 0;
-    o.urgentMeal = o.kind && n.hunger > 78 && o.loc !== 2 ? 30 : 0;
+    o.urgentMeal = o.kind && n.hunger > 78 && o.loc !== 2 && o.loc !== 6 ? 30 : 0;
     const honors =
       plan &&
       tick >= plan.dueTick &&

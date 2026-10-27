@@ -2,6 +2,7 @@
 import { computed, nextTick, onUnmounted, ref } from "vue";
 import { createSimulation } from "./controller/simulation.ts";
 import { slots, profiles, places } from "./core/config.ts";
+import type { LocationId } from "./core/types.ts";
 import { clock } from "./ui/format.ts";
 import CampusMap from "./components/CampusMap.vue";
 import PersonPanel from "./components/PersonPanel.vue";
@@ -29,6 +30,12 @@ const {
 } = sim;
 const fileInput = ref<HTMLInputElement>();
 const page = ref<"campus" | "stories">("campus");
+const selectedPlace = ref<LocationId | null>(null);
+const sideView = ref<"overview" | "place" | "person">("overview");
+const placePeople = computed(() => world.value.npcs.filter((n) => n.loc === selectedPlace.value));
+function showPlace(id: LocationId) { selectedPlace.value = id; sideView.value = "place"; }
+function selectPerson(id: number) { sim.select(id); sideView.value = "person"; }
+
 const focusStoryId = ref<string | null>(null);
 const highlights = computed(() => buildStories(world.value).slice(0, 2));
 async function openStory(id: string) {
@@ -38,7 +45,7 @@ async function openStory(id: string) {
   focusStoryId.value = id;
 }
 function showPerson(id: number) {
-  sim.select(id);
+  selectPerson(id);
   page.value = "campus";
   window.scrollTo({ top: 0, behavior: "auto" });
 }
@@ -60,7 +67,7 @@ onUnmounted(sim.stop);
   <header class="app-header">
     <a class="brand" href="#"
       ><span>✳</span><b>赛博校园<small>THE CAMPUS OBSERVATORY</small></b></a
-    ><span class="edition">七日观察 / VOL. 004</span
+    ><span class="edition">七日观察 / VOL. 005</span
     ><button class="text-button" @click="helpOpen = true">玩法与机制 ↗</button>
   </header>
   <main>
@@ -149,7 +156,7 @@ onUnmounted(sim.stop);
           :key="id"
           class="watch-chip"
           :style="{ '--c': profiles[id].color }"
-          @click="sim.select(id)"
+          @click="selectPerson(id)"
         >
           <i></i><b>{{ world.npcs[id].name }}</b
           ><span
@@ -181,7 +188,8 @@ onUnmounted(sim.stop);
             :watched="view.watched"
             :follow="view.follow"
             :duration="running ? Math.min(650, speed * 0.85) : 650"
-            @select="sim.select"
+            :selected-place="selectedPlace"
+            @place="showPlace"
           />
           <div class="map-caption">
             <span>{{
@@ -191,7 +199,7 @@ onUnmounted(sim.stop);
             }}</span
             ><span id="count">{{ world.tick }} / 28 时段</span>
           </div>
-          <p class="map-reference">地图使用你提供的 2025 年沙河校区示意图，保留原图标注与署名；五个模拟地点暂以代表点呈现，宿舍统一映射到雁南园。</p>
+          <p class="map-reference">地图依据你提供的 2025 年沙河校区示意图。圆点为当前开放的模拟地点；图中其他建筑暂未接入人物行动。</p>
         </section>
         <section class="panel story-glimpse" aria-label="值得留意的故事">
           <div class="panelhead"><h2>正在发生 <small>一起来看看</small></h2><button class="text-button" @click="page = 'stories'">全部人物故事 →</button></div>
@@ -242,14 +250,36 @@ onUnmounted(sim.stop);
           </div>
         </section>
       </section>
-      <PersonPanel
-        :world="world"
-        :selected="view.selected"
-        :watched="view.watched"
-        @select="sim.select"
-        @watch="sim.watch"
-        @event="detailId = $event"
-      />
+      <aside class="context-column">
+        <div v-if="sideView === 'overview'" class="panel context-panel">
+          <span class="context-kicker">CAMPUS OBSERVATION</span>
+          <h2>从这里开始观察</h2>
+          <p>点击地图上的地点，看看谁在这里，再走进他们的故事。</p>
+          <div class="context-section"><h3>此刻在校园里</h3>
+            <button v-for="person in world.npcs.slice(0, 4)" :key="person.id" class="context-person" @click="selectPerson(person.id)">
+              <span><strong>{{ person.name }}</strong><small>{{ places[person.loc] }} · {{ person.action }}</small></span><b>→</b>
+            </button>
+          </div>
+          <button class="context-link" @click="showPlace(0)">从学生公寓开始 →</button>
+        </div>
+        <div v-else-if="sideView === 'place' && selectedPlace !== null" class="panel context-panel">
+          <button class="back-link" @click="sideView = 'overview'">← 校园概览</button>
+          <span class="context-kicker">校园地点 / PLACE</span>
+          <h2>{{ places[selectedPlace] }}</h2>
+          <p>{{ placePeople.length ? `此刻有 ${placePeople.length} 人在这里，点开一个人看看。` : '此刻还没有人，时间向前走，也许会有人经过。' }}</p>
+          <div class="context-section"><h3>在这里的人 <span>{{ placePeople.length }}</span></h3>
+            <button v-for="person in placePeople" :key="person.id" class="context-person" @click="selectPerson(person.id)">
+              <span><strong>{{ person.name }}</strong><small>{{ person.action }}</small></span><b>→</b>
+            </button>
+            <p v-if="!placePeople.length" class="context-empty">安静的一刻</p>
+          </div>
+        </div>
+        <template v-else>
+          <button class="back-link side-back" @click="selectedPlace !== null ? sideView = 'place' : sideView = 'overview'">← {{ selectedPlace !== null ? places[selectedPlace] : '校园概览' }}</button>
+          <PersonPanel :world="world" :selected="view.selected" :watched="view.watched"
+            @select="selectPerson" @watch="sim.watch" @event="detailId = $event" />
+        </template>
+      </aside>
     </div>
     <section v-show="page === 'stories'" class="stories-view" aria-label="人物故事视图">
       <StoryDeck :world="world" :watched="view.watched" :focus-id="focusStoryId" @event="detailId = $event" @select="showPerson" />

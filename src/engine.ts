@@ -1,3 +1,4 @@
+import { courseAt } from "./core/academics.ts";
 import { active, preparePlans, finishPlan } from "./core/plans.ts";
 import { createTasks, expireTasks, workTasks } from "./core/tasks.ts";
 import * as config from "./core/config.ts";
@@ -150,7 +151,7 @@ export class World {
   }
   environmentParents(loc: LocationId) {
     return [
-      loc === 0 ? this.environment.rooms : null,
+      (loc === 0 || loc === 5) ? this.environment.rooms : null,
       loc === 1 ? this.environment.groups : null,
       loc === 4 && this.party === this.tick ? this.environment.party : null,
     ].filter((id): id is number => id !== null);
@@ -300,9 +301,9 @@ export class World {
             evidence: chosen.evidence,
           }
         : null;
-      n.energy = clamp(n.energy + (n.loc === 0 ? 42 : 0));
-      n.hunger = clamp(n.hunger - (n.loc === 2 ? 65 : 0));
-      if (n.loc === 1 || n.loc === 3)
+      n.energy = clamp(n.energy + ([0, 5].includes(n.loc) ? 42 : 0));
+      n.hunger = clamp(n.hunger - ([2, 6].includes(n.loc) ? 65 : 0));
+      if ([1, 3, 8, 9, 10].includes(n.loc))
         n.progress += 4 + Math.round(n.ambition * 5);
       const id = this.log(
         `${n.name}前往${places[n.loc]}${chosen.kind ? `，${chosen.action}` : chosen.action}。`,
@@ -311,6 +312,7 @@ export class World {
         [n.last, ...chosen.evidence, ...this.environmentParents(n.loc)],
         {
           reason: chosen.reason,
+          courseId: chosen.action.startsWith("上") ? courseAt(this.tick)?.id : undefined,
           taskId: chosen.taskId,
           activityId: chosen.activityId,
           planId: n.plan && ((chosen.kind === "appointment" && n.plan.kind === "appointment") ||
@@ -343,7 +345,7 @@ export class World {
         if (
           p.id !== n.id &&
           p.loc === n.loc &&
-          (n.loc !== 0 || this.rooms[p.id] === this.rooms[n.id])
+          ((n.loc !== 0 && n.loc !== 5) || this.rooms[p.id] === this.rooms[n.id])
         ) {
           this.events[n.last! - 1].data.observedPeople!.push(p.id);
           const sighting = {

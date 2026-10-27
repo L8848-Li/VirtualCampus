@@ -142,10 +142,10 @@ export const profiles: Profile[] = [
   },
 ];
 
-export const ENGINE_VERSION = "0.4.0";
+export const ENGINE_VERSION = "0.5.0";
 export const SCHEMA_VERSION = 3;
 export const TOTAL_TICKS = 28;
 export const MAX_INPUTS = 256;
 export const names = profiles.map((p) => p.name);
-export const places = ["宿舍", "教学楼", "食堂", "图书馆", "社团中心"];
+export const places = ["雁南园学生公寓", "公共教学楼", "学生餐厅", "图书馆", "学生活动中心", "雁北园学生公寓", "风味餐厅", "运动场", "教学实验综合楼", "智慧教学楼", "理学楼", "综合办公楼"];
 export const slots = ["清晨", "午间", "午后", "夜晚"];
