@@ -24,8 +24,6 @@ NPC 会记住一起吃饭的约定、为小组报告安排专注时间，也可�
 
 生活细节参考了[北邮沙河校区图书馆馆藏与服务分布](https://libportal.bupt.edu.cn/a/ruguanzhinan/guancangfenbu/)、[北邮餐饮服务介绍](https://hq.bupt.edu.cn/info/1006/1096.htm)及[校园美食节活动](https://hq.bupt.edu.cn/info/1010/1612.htm)，游戏中的活动日期、服务、价格和时间为虚构规则，不应当作现实指南。
 
-
-
 ## 本地运行
 
 Node.js 22.12+，建议 Node.js 24 LTS：
@@ -53,6 +51,13 @@ npm run dev
 
 每次推进与干预自动保存到当前浏览器。导出 / 导入带版本和校验的 JSON 可转移或备份。v0.16.0 使用独立的本机存档键，保留旧版记录，暂不支持跨引擎版本导入。没有账号或云同步。
 
+## 技术结构
+
+- `src/engine.ts` 负责世界推进、事件、干预、存档校验及从种子和干预重放；`src/core/` 包含决策、课程、社团、生活服务和社交等规则。
+- `src/controller/` 将模拟结果发布为界面快照，并管理播放和浏览器本地存档；`src/components/` 与 `src/App.vue` 负责地图、人物档案和事件展示。
+- 项目是本地运行的静态前端，没有独立后端。存档保存在浏览器本地；清理浏览器数据前可导出 JSON 备份。
+- 改变模拟结果的规则需要更新引擎版本和存档键，并检查同版本的种子、干预和重放。事件记录用于追溯实际行动，人物决策只使用本人可获得的信息。
+
 ## 验证
 
 ```sh
@@ -66,5 +71,7 @@ npm run build
 默认测试对种子 0、1、99 逐时段检查重放和状态边界，并覆盖局部信息、计划持续与中断、共同事务、认知来源、解释失败、自主筹备、实际到场、故事聚合、存档恢复与地图缩放边界。`npm run test:replay:full` 单独执行 0–99 共 100 个种子的完整逐时段重放和全部原有不变量，失败时列出种子；CI 明确运行两者。故事卡只读取已提交事件，不把人物猜测归入事实。
 
 `npm run evaluate` 默认检查 100 个种子，每个模拟 28 个时段，并生成本地行为评估报告。记录行动、约定、报告、认知来源和小活动的结果；完成率与误会数量都不是趣味性的替代指标。CI 在 Node.js 22 / 24 运行类型检查、测试、评估和构建。
+
+需要检查完整学期分布时，可分别运行 `node --experimental-strip-types scripts/evaluate-research.ts`、`scripts/evaluate-enrollment.ts` 和 `scripts/evaluate-living.ts`（后两条同样使用 `node --experimental-strip-types`）。这些评估生成的 `internal-docs/` 报告仅保存在本地，不随 Git 提交。性能基准脚本也位于 `scripts/`；基准结果依赖设备与测试条件，不等同于性能保证。
 
 [贡献说明](CONTRIBUTING.md) · [MIT 许可证](LICENSE)
