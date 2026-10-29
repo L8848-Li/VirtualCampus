@@ -5,10 +5,10 @@ test('homework is assigned after the first class and only progresses through its
   const world = new World('homework');
   expect(world.homework).toHaveLength(0);
   world.step();
-  expect(world.homework).toHaveLength(10);
+  expect(world.homework).toHaveLength(world.enrollments.filter(e => e.courseIds.includes("math")).length);
   while (world.step()) {
     for (const item of world.homework) {
-      const work = world.events.filter((event) => event.type === 'action' && event.data.homeworkId === item.id && event.people[0] === item.owner);
+      const work = world.events.filter((event) => ['homework_progress', 'homework_completed'].includes(event.type) && event.data.homeworkId === item.id && event.people[0] === item.owner);
       expect(item.progress).toBe(work.length);
       expect(item.progress).toBeLessThanOrEqual(item.required);
     }

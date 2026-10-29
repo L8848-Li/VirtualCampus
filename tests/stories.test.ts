@@ -94,6 +94,8 @@ test("a missed meal keeps the actual reason private until a later meeting, even 
     createdTick: 0, dueTick: 1, untilTick: 2, stage: "pending", attempts: 0, worked: 0, lastEvent: 1 };
   listener.plan = { ...plan, target: speaker.id };
   speaker.plan = { ...plan, target: listener.id };
+  listener.loc = 2;
+  listener.intent = { kind: "appointment", target: speaker.id, evidence: [] };
   w.tick = 1;
   finishPlan(w, speaker, "cancelled", "当时精力太低，需要先休息");
   assert.equal(listener.beliefs.length, 0);

@@ -140,12 +140,14 @@ export const profiles: Profile[] = [
     color: "#7c9b8c",
     glyph: "♫",
   },
+  { name: "方澄", role: "研究生 · 校园数据研究者", education: "graduate", interest: "城市与数据", quirk: "习惯把疑问记在小本上", goal: "完成科研课题", home: 12, habit: 2, ext: 0.45, sensitive: 0.5, ambition: 0.78, color: "#5b8391", glyph: "◇" },
+  { name: "叶宁", role: "研究生 · 智能系统研究者", education: "graduate", interest: "机器人制作", quirk: "实验前会反复检查记录", goal: "完成科研课题", home: 18, habit: 2, ext: 0.58, sensitive: 0.4, ambition: 0.82, color: "#9b806e", glyph: "✳" },
 ];
 
-export const ENGINE_VERSION = "0.6.0";
+export const ENGINE_VERSION = "0.16.0";
 export const SCHEMA_VERSION = 3;
-export const TOTAL_TICKS = 28;
+export const TOTAL_TICKS = 168;
 export const MAX_INPUTS = 256;
 export const names = profiles.map((p) => p.name);
-export const places = ["雁南园学生公寓", "公共教学楼", "学生餐厅", "图书馆", "学生活动中心", "雁北园学生公寓", "风味餐厅", "运动场", "教学实验综合楼", "智慧教学楼", "理学楼", "综合办公楼"];
+export const places = ["雁南园学生公寓", "公共教学楼", "学生餐厅", "图书馆", "学生活动中心", "雁北园学生公寓", "风味餐厅", "运动场", "教学实验综合楼", "智慧教学楼", "理学楼", "综合办公楼", "科研楼", "北区餐厅", "计算机学院实验楼", "体育馆", "研究生公寓公共空间", "学生宿舍 IV 区公共空间", "智能工程学院楼", "南侧运动场", "学生宿舍 IV 区私人宿舍", "研究生公寓私人宿舍", "校外"];
 export const slots = ["清晨", "午间", "午后", "夜晚"];

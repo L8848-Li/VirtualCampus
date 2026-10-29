@@ -1,12 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 import { places } from "../src/core/config.ts";
-import { World } from "../src/engine.ts";
-test.each(Array.from({ length: 100 }, (_, i) => i))(
+import { World, TOTAL_TICKS } from "../src/engine.ts";
+// The long run keeps every original seed and assertion; the default suite
+// samples boundaries quickly, while CI runs both suites explicitly.
+const replaySeeds = process.env.VIRTUAL_CAMPUS_FULL_REPLAY === "1"
+  ? Array.from({ length: 100 }, (_, i) => i)
+  : [0, 1, 99];
+test.each(replaySeeds)(
   "seed %i preserves every-step replay and state invariants",
   (seed) => {
     const w = new World(seed);
-    for (let t = 0; t < 28; t++) {
+    for (let t = 0; t < TOTAL_TICKS; t++) {
       if (t % 5 === 0) w.intervene("rooms");
       if (t % 7 === 0) w.intervene("groups");
       if (t % 6 === 0) w.intervene("party");
@@ -23,7 +28,7 @@ test.each(Array.from({ length: 100 }, (_, i) => i))(
     }
     assert.equal(w.step(), false);
     assert.equal(w.intervene("party"), false);
-  },
+  }, 15000,
 );
 test("same input agrees, different seeds diverge", () => {
   const a = new World("test"),

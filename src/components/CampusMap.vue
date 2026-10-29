@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import type { LocationId, WorldSnapshot } from "../core/types.ts";
 import { profiles } from "../core/config.ts";
 import { MIN_ZOOM, MAX_ZOOM, clampPan, clampZoom, zoomAround, type Point, type Size } from "../ui/mapViewport.ts";
+import { campusLocations as locations } from "../ui/campusLocations.ts";
 import AvatarIcon from "./AvatarIcon.vue";
 
 const props = defineProps<{
@@ -14,21 +15,7 @@ const props = defineProps<{
   selectedPlace: LocationId | null;
 }>();
 const emit = defineEmits<{ place: [id: LocationId] }>();
-const mapImage = `${import.meta.env.BASE_URL}maps/shahe-campus-2025.jpg`;
-// Positions are percentages of the full, unmodified 2132 × 1600 source image.
-const locations: { id: LocationId; name: string; x: number; y: number }[] = [
-  { id: 0, name: "雁南园学生公寓", x: 34.2, y: 77.1 },
-  { id: 1, name: "公共教学楼", x: 48.4, y: 67.1 },
-  { id: 2, name: "学生餐厅", x: 45.3, y: 87.4 },
-  { id: 3, name: "图书馆", x: 65.9, y: 46.6 },
-  { id: 4, name: "学生活动中心", x: 52.6, y: 50.5 },
-  { id: 6, name: "风味餐厅", x: 44, y: 41 },
-  { id: 7, name: "运动场", x: 24.1, y: 45 },
-  { id: 8, name: "教学实验综合楼", x: 65.6, y: 67 },
-  { id: 9, name: "智慧教学楼", x: 81.3, y: 62 },
-  { id: 10, name: "理学楼", x: 82, y: 88 },
-  { id: 11, name: "综合办公楼", x: 52.5, y: 40 },
-];
+const mapImage = `${import.meta.env.BASE_URL}maps/youyou-campus.svg`;
 const viewport = ref<HTMLElement>();
 const zoom = ref(MIN_ZOOM);
 const pan = ref<Point>({ x: 0, y: 0 });
@@ -52,6 +39,7 @@ function setZoom(value: number, pivot?: Point) {
   zoom.value = next;
 }
 function resetMap() { zoom.value = MIN_ZOOM; pan.value = { x: 0, y: 0 }; }
+defineExpose({ zoomIn: () => setZoom(zoom.value + 0.5), zoomOut: () => setZoom(zoom.value - 0.5), resetMap });
 function focusLocation(id: LocationId, scrollToMap = false) {
   const dimensions = size();
   if (!dimensions.width || !dimensions.height) return;
@@ -93,11 +81,10 @@ function moveWithKeyboard(event: KeyboardEvent) {
   pan.value = clampPan({ x: pan.value.x + direction[event.key].x, y: pan.value.y + direction[event.key].y }, zoom.value, size());
 }
 watch(() => [props.follow, props.selected, props.world.npcs[props.selected]?.loc] as const, ([follow, , location]) => {
-  if (follow && location !== undefined) {
-    if (zoom.value > MIN_ZOOM) focusLocation(location);
-  }
+  if (follow && location !== undefined) focusLocation(location);
 }, { immediate: true });
 onMounted(() => {
+  if (props.follow && props.world.npcs[props.selected]) focusLocation(props.world.npcs[props.selected].loc);
   if (!viewport.value || typeof ResizeObserver === "undefined") return;
   observer = new ResizeObserver(([entry]) => {
     if (entry.contentRect.width && entry.contentRect.height) pan.value = clampPan(pan.value, zoom.value, size());
@@ -110,7 +97,7 @@ onUnmounted(() => observer?.disconnect());
 <template>
   <div class="campus-viewer">
     <div class="map-tools" aria-label="地图缩放控制">
-      <div><strong>沙河校区</strong><small>点击地点查看在场人物</small></div>
+      <div><strong>邮邮大学</strong><small>点击地点查看在场人物</small></div>
       <div class="zoom-controls">
         <button type="button" :disabled="zoom <= MIN_ZOOM" aria-label="缩小地图" @click="setZoom(zoom - 0.5)">−</button>
         <span aria-live="polite">{{ zoom.toFixed(1) }}×</span>
@@ -119,13 +106,13 @@ onUnmounted(() => observer?.disconnect());
       </div>
     </div>
     <div ref="viewport" id="map" class="shahe-viewport" :class="{ pannable: zoom > MIN_ZOOM, dragging }"
-      tabindex="0" aria-label="沙河校区地图：放大后可拖动或使用方向键平移，按住 Ctrl 或 Command 并滚动可以缩放"
+      tabindex="0" aria-label="邮邮大学地图：放大后可拖动或使用方向键平移，按住 Ctrl 或 Command 并滚动可以缩放"
       @wheel="onWheel" @pointerdown="startDrag" @pointermove="moveDrag" @pointerup="endDrag" @pointercancel="endDrag" @lostpointercapture="cancelDrag" @keydown="moveWithKeyboard">
       <div class="shahe-map-stage" :style="{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }">
-        <img class="shahe-reference" :src="mapImage" draggable="false" alt="北京邮电大学沙河校区示意图，北邮人团队 2025 年 8 月制" />
+        <img class="shahe-reference" :src="mapImage" draggable="false" alt="邮邮大学校园地图，根据沙河校区示意布局重新绘制" />
         <button v-for="group in groups" :key="group.id" type="button" class="location-marker"
-          :class="{ active: selectedPlace === group.id, watched: group.members.some((n) => watched.includes(n.id)) }"
-          :style="{ left: `${group.x}%`, top: `${group.y}%`, transform: `scale(${1 / zoom}) translate(-50%, -50%)` }"
+          :class="{ active: selectedPlace === group.id, empty: !group.members.length, watched: group.members.some((n) => watched.includes(n.id)) }"
+          :style="{ left: `${group.x}%`, top: `${group.y}%`, transform: group.members.length ? `scale(${1 / zoom}) translate(-50%, -50%)` : `scale(${1 / zoom}) translate(calc(-50% + 18px), calc(-50% - 14px))` }"
           :aria-label="`${group.name}，${group.members.length} 人，展开在场名单`"
           :aria-pressed="selectedPlace === group.id" :title="`${group.name} · ${group.members.length} 人`"
           @click.stop="emit('place', group.id)">
@@ -135,5 +122,12 @@ onUnmounted(() => observer?.disconnect());
       </div>
     </div>
     <p class="map-help">放大后拖动地图；按住 Ctrl 或 Command 滚动也可缩放。圈点上的人数会随人物行动变化。</p>
+    <details class="map-directory">
+      <summary>查看全部地点 · {{ groups.length }} 处</summary>
+      <div class="place-list">
+        <button v-for="group in groups" :key="group.id" type="button" :class="{ active: selectedPlace === group.id }"
+          @click="focusLocation(group.id); emit('place', group.id)">{{ group.name }} <small>{{ group.members.length }} 人</small></button>
+      </div>
+    </details>
   </div>
 </template>

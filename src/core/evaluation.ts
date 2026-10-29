@@ -8,6 +8,7 @@ export interface QualityMetrics {
   invitationAcceptanceRate: number;
   misunderstandingRate: number;
   plansAgreed: number;
+  plansNotDue: number;
   plansFulfilled: number;
   planFulfillmentRate: number;
   taskCompletionRate: number;
@@ -28,6 +29,7 @@ export function evaluateSeeds(seeds: number = 100): QualityMetrics {
     throw new Error("评估种子数量应为 1–1000。");
   let actions = 0,
     diversity = 0,
+    evaluatedPeople = 0,
     repeats = 0,
     windows = 0,
     crises = 0,
@@ -37,8 +39,10 @@ export function evaluateSeeds(seeds: number = 100): QualityMetrics {
     misunderstandings = 0,
     interactions = 0,
     plansAgreed = 0,
+    plansNotDue = 0,
     plansFulfilled = 0,
     completedTasks = 0,
+    totalTasks = 0,
     changed = 0,
     beliefsFormed = 0,
     beliefsRevised = 0,
@@ -49,16 +53,19 @@ export function evaluateSeeds(seeds: number = 100): QualityMetrics {
   const eventTypes: Record<string, number> = {};
   for (let seed = 0; seed < seeds; seed++) {
     const w = new World(`quality-${seed}`),
-      histories = Array.from({ length: 10 }, () => [] as string[]);
+      histories = w.npcs.map(() => [] as string[]);
+    evaluatedPeople += w.npcs.length;
     while (w.tick < 28) {
       if (w.tick === 2) w.intervene("party");
       w.step();
       for (const n of w.npcs) {
         agentSteps++;
         if (n.energy < 10 || n.hunger > 95) crises++;
-        const action = w.events
-          .filter((e) => e.type === "action" && e.people[0] === n.id)
-          .at(-1)!;
+        // The newest match is identical to filter(...).at(-1), without
+        // scanning and allocating an array for the entire event history.
+        let index = w.events.length - 1;
+        while (index >= 0 && (w.events[index].type !== "action" || w.events[index].people[0] !== n.id)) index--;
+        const action = w.events[index]!;
         histories[n.id].push(
           `${action.data.location}:${n.intent?.kind || n.action}`,
         );
@@ -73,6 +80,7 @@ export function evaluateSeeds(seeds: number = 100): QualityMetrics {
       }
     }
     const agreedIds = new Set<string>(),
+      notDueIds = new Set<string>(),
       fulfilledIds = new Set<string>();
     for (const e of w.events) {
       eventTypes[e.type] = (eventTypes[e.type] || 0) + 1;
@@ -89,8 +97,11 @@ export function evaluateSeeds(seeds: number = 100): QualityMetrics {
       )
         interactions++;
       if (e.type === "misunderstanding") misunderstandings++;
-      if (e.type === "plan_accepted" && typeof e.data.planId === "string")
+      if (e.type === "plan_accepted" && typeof e.data.planId === "string") {
         agreedIds.add(e.data.planId);
+        if (typeof e.data.dueTick === "number" && e.data.dueTick >= w.tick)
+          notDueIds.add(e.data.planId);
+      }
       if (
         e.type === "plan_fulfilled" &&
         typeof e.data.planId === "string" &&
@@ -99,7 +110,9 @@ export function evaluateSeeds(seeds: number = 100): QualityMetrics {
         fulfilledIds.add(e.data.planId);
     }
     plansAgreed += agreedIds.size;
+    plansNotDue += notDueIds.size;
     plansFulfilled += fulfilledIds.size;
+    totalTasks += w.tasks.length;
     completedTasks += w.tasks.filter((t) => t.status === "completed").length;
     for (const n of w.npcs) for (const belief of n.beliefs) {
       beliefsFormed++;
@@ -110,7 +123,7 @@ export function evaluateSeeds(seeds: number = 100): QualityMetrics {
     activitiesHeld += w.activities.filter((a) => a.status === "held").length;
     activitiesCancelled += w.activities.filter((a) => a.status === "cancelled").length;
     const control = new World(`quality-${seed}`);
-    while (control.step());
+    while (control.tick < w.tick) control.step();
     if (
       JSON.stringify(control.npcs.map((n) => ({ loc: n.loc, rel: n.rel }))) !==
       JSON.stringify(w.npcs.map((n) => ({ loc: n.loc, rel: n.rel })))
@@ -120,15 +133,16 @@ export function evaluateSeeds(seeds: number = 100): QualityMetrics {
   return {
     seeds,
     actions,
-    activityDiversity: round(diversity / (seeds * 10)),
+    activityDiversity: round(diversity / evaluatedPeople),
     fourStepRepeatRate: round(repeats / windows),
     crisisRate: round(crises / agentSteps),
     invitationAcceptanceRate: round(accepted / Math.max(1, invitations)),
     misunderstandingRate: round(misunderstandings / Math.max(1, interactions)),
     plansAgreed,
+    plansNotDue,
     plansFulfilled,
-    planFulfillmentRate: round(plansFulfilled / Math.max(1, plansAgreed)),
-    taskCompletionRate: round(completedTasks / (seeds * 3)),
+    planFulfillmentRate: round(plansFulfilled / Math.max(1, plansAgreed - plansNotDue)),
+    taskCompletionRate: round(completedTasks / Math.max(1, totalTasks)),
     interventionChangedWorldRate: round(changed / seeds),
     beliefsFormed,
     beliefsRevised,

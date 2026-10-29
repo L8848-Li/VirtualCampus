@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "vitest";
 import { World } from "../src/engine.ts";
-import { considerActivity, inviteToActivity, workActivities, resolveActivities } from "../src/core/activities.ts";
+import { considerActivity, inviteToActivity, workActivities, resolveActivities, projectWorkspace } from "../src/core/activities.ts";
 import { chooseAction } from "../src/core/decision.ts";
 
 function proposal() {
@@ -66,6 +66,29 @@ test("preparation requires a consenting member to choose work and actually be th
   assert.equal(activity.contributions[a.id], 2);
   assert.equal(activity.contributions[b.id], undefined);
   assert.equal(activity.contributions[outsider.id], undefined);
+});
+
+test("project preparation uses the named shared workspace, communicated only to invited participants", () => {
+  const { w, a, activity, parent } = proposal();
+  activity.kind = "project";
+  activity.preparationLocation = 12;
+  const guest = w.npcs[2];
+  Object.assign(guest, { loc: a.loc, energy: 90, hunger: 0, social: 80 });
+  guest.rel[a.id].aff = 30;
+  inviteToActivity(w, activity, guest, parent);
+  assert.equal(guest.activityInvitations[0].preparationLocation, 12);
+  const invite = w.events.find((e) => e.type === "activity_invited" && e.people.includes(guest.id))!;
+  assert.equal(invite.data.preparationLocation, 12);
+  assert(invite.text.includes("科研楼"));
+  assert(!w.npcs[4].memory.includes(invite.id));
+  a.intent = { kind: "activity_prepare", activityId: activity.id, evidence: [] };
+  a.loc = 8;
+  workActivities(w);
+  assert.equal(activity.progress, 0);
+  a.loc = 12;
+  workActivities(w);
+  assert.equal(activity.progress, 2);
+  assert.equal(projectWorkspace({ id: 5, interest: "机器人制作" }), 18);
 });
 
 test("an agreed activity competes with real physiological needs instead of compelling attendance", () => {

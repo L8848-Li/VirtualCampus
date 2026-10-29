@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1824 1368" role="img" aria-labelledby="title desc">
+<title id="title">邮邮大学 · 校园观察地图</title><desc id="desc">根据沙河校区示意图重新绘制的校园平面，包含道路、绿地和建筑。所有建筑均为游戏中的虚构设定。</desc>
+<defs>
+ <pattern id="grass" width="32" height="32" patternUnits="userSpaceOnUse"><rect width="32" height="32" fill="#dce8cc"/><path d="M4 15l3 -3 M22 28l3 -3" stroke="#bfceaf" stroke-width="1.5"/></pattern>
+ <pattern id="windows" width="18" height="16" patternUnits="userSpaceOnUse"><rect x="4" y="4" width="9" height="6" rx="1" fill="#fff8e7" opacity=".6"/></pattern>
+ <pattern id="planned" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#b7cec1"/></pattern>
+ <filter id="shadow" x="-20%" y="-20%" width="150%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#64765c" flood-opacity=".18"/></filter>
+ <style>text{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;fill:#47594a}.campus-name{font-size:37px;font-weight:700;letter-spacing:8px}.caption{font-size:16px;letter-spacing:3px;fill:#91a08b}.label{font-size:23px;font-weight:600;text-anchor:middle}.small{font-size:16px;text-anchor:middle;fill:#596e5b}.tiny{font-size:13px;text-anchor:middle;fill:#6c806b}.road-label{font-size:17px;letter-spacing:5px;fill:#a19b8c;text-anchor:middle}.building{stroke:#faf7e9;stroke-width:5;filter:url(#shadow)}.window{fill:url(#windows);pointer-events:none}.future{fill:url(#planned);stroke:#faf7e9;stroke-width:4;filter:url(#shadow)}.leaf{fill:#a4bc91;stroke:#f1f2dd;stroke-width:5}</style>
+</defs>
+<!-- 原创绘制；构图以参考示意图的建筑相对位置为依据。 -->
+<rect width="1824" height="1368" fill="#f5f1e6"/>
+<text x="912" y="51" class="campus-name" text-anchor="middle">邮邮大学</text><text x="912" y="79" class="caption" text-anchor="middle">YOUYOU UNIVERSITY · 校园观察地图</text>
+<g transform="translate(69 38)"><path d="M0 44L20 2l-6 45-8-10z" fill="#7b9076"/><text x="20" y="4" font-size="16">北</text></g>
+<!-- 校园基底及绿地 -->
+<rect x="132" y="97" width="1552" height="1208" rx="18" fill="#e8efe0" stroke="#c7d3bd" stroke-width="5"/>
+<path d="M160 118H518V432L160 403z M164 810H514V852H164z M745 370H863Q935 281 1040 274Q1145 280 1218 370H1342V456H745z M744 1040H867V1122H744z M1187 1040H1342V1122H1187z M938 1150H1028V1282H938z M1067 1150H1342V1282H1067z" fill="url(#grass)"/>
+<!-- 校园道路：根据参考图的主干路和支路位置重新绘制 -->
+<g fill="none" stroke="#cfc7b6" stroke-linecap="round" stroke-linejoin="round">
+ <path d="M144 789H1641" stroke-width="30"/><path d="M537 108V1293 M724 108V1293 M1043 108V1293 M1357 108V1293" stroke-width="18"/>
+ <path d="M537 471H1623 M724 1027H1625 M724 1134H1625 M1356 280H1620 M1356 490H1625 M1357 1140H1625" stroke-width="13"/>
+ <path d="M537 266H724 M537 616H1043 M537 799H724 M537 851H724" stroke-width="8"/>
+ <path d="M725 362H866Q948 261 1043 261T1220 362H1355" stroke-width="12"/>
+ <path d="M144 108H1672V1293H144Z" stroke-width="14"/>
+</g>
+<g fill="none" stroke="#fffdf2" stroke-width="2" stroke-dasharray="8 10" opacity=".8"><path d="M155 789H1632 M1043 112V1288 M537 112V1288 M1357 112V1288"/></g>
+<text x="923" y="779" class="road-label">鸿 雁 路</text><text x="1058" y="940" class="road-label" transform="rotate(90 1058 940)">国 脉 路</text><text x="525" y="970" class="road-label" transform="rotate(90 525 970)">西 路</text>
+<!-- 校园外围道路参照示意图，保留两处校门与道路的相对方向 -->
+<g fill="none" stroke="#d8d1c1" stroke-width="3" opacity=".85"><path d="M116 128V747 M116 825V1280 M1698 128V1277 M178 1320H995 M1082 1320H1465"/></g>
+<text x="49" y="865" class="road-label" transform="rotate(-90 49 865)">南 丰 路</text>
+<text x="1748" y="691" class="road-label" transform="rotate(90 1748 691)">回 昌 路</text>
+<text x="916" y="1349" class="road-label">高 教 园 南 三 街</text>
+<!-- 北部：宿舍、北区食堂与科研楼，形状和相对位置参考校区示意 -->
+<g class="future">
+ <rect x="553" y="140" width="161" height="47" rx="15"/><rect x="553" y="220" width="147" height="33" rx="12"/>
+ <rect x="565" y="285" width="137" height="82" rx="10"/>
+ <rect x="752" y="130" width="265" height="50" rx="14"/><rect x="1081" y="130" width="262" height="50" rx="14"/>
+ <path d="M751 202q0-14 14-14h27q14 0 14 14v45h50q78-57 185-57t186 57h58v-45q0-14 14-14h28q15 0 15 14v108q0 18-18 18h-104q-21 0-36-15-55-54-143-54t-142 54q-15 15-36 15h-94q-18 0-18-18z"/>
+ <path d="M1427 131h65q13 0 23 10l43 43q7 7 7 18v37q0 16-16 16h-18v-54h-55l-50-48q-12-11 1-22z"/>
+ <path fill-rule="evenodd" d="M1423 299h107q15 0 15 15v56h23q16 0 16 15v76q0 16-16 16h-113q-16 0-16-16v-27h-17q-15 0-15-15V314q0-15 16-15z M1450 330v44h52v-44z M1489 401v42h54v-42z"/>
+</g>
+<text x="633" y="195" class="small">学生宿舍Ⅳ区</text><text x="633" y="322" class="small">北区食堂</text>
+<text x="1043" y="222" class="label">科研楼</text><text x="1493" y="211" class="small">智能工程学院楼</text><text x="1496" y="403" class="small">计算机学院楼</text>
+<!-- 北部绿地前沿的医务室与邮邮星塔 -->
+<rect x="899" y="464" width="103" height="22" rx="11" fill="#e5b18b" stroke="#fff9e9" stroke-width="3"/><text x="951" y="480" class="tiny">医务室</text>
+<path d="M1014 484l10-26 10 26m-16-8h12m-6-18v-7" fill="none" stroke="#718b75" stroke-width="2"/><text x="1090" y="480" class="tiny">邮邮星塔</text>
+<!-- 西侧运动区：北侧体育馆、南侧跑道与小型球场 -->
+<g class="future"><rect x="166" y="430" width="91" height="34" rx="12"/><rect x="272" y="442" width="94" height="29" rx="10"/>
+ <path d="M158 486h116q14 0 14 14v14q0-14 14-14h70v151q0 28-21 40h-34q-24 0-28-38-4 38-27 38h-79q-25 0-25-25z"/></g>
+<text x="264" y="565" class="label">体育馆</text>
+<rect x="373" y="477" width="144" height="278" rx="12" fill="#c8dcae" stroke="#fff9e9" stroke-width="4"/>
+<rect x="386" y="485" width="107" height="217" rx="54" fill="#d98e73"/><rect x="404" y="545" width="69" height="100" fill="#81b67c" stroke="#e8f0db" stroke-width="2"/>
+<path d="M404 595h69 M438 545v100 M413 545v10h51v-10 M413 645v-10h51v10" fill="none" stroke="#edf3df" stroke-width="2"/>
+<g fill="#78a990" stroke="#e9f1dc" stroke-width="2"><path d="M378 711h20v33h-20z M402 711h20v33h-20z M426 711h20v33h-20z M450 711h20v33h-20z M474 711h20v33h-20z"/>
+ <path d="M497 487h14v33h-14z M497 526h14v33h-14z M497 565h14v33h-14z M497 604h14v33h-14z M497 643h14v33h-14z M497 682h14v33h-14z"/></g>
+<path d="M379 727h115 M388 712v31 M412 712v31 M436 712v31 M460 712v31 M484 712v31" stroke="#e9f1dc" stroke-width="1"/><text x="439" y="607" class="label">运动场</text>
+<rect x="154" y="709" width="80" height="26" rx="13" fill="#e9ba92" stroke="#fff9e9" stroke-width="3"/><text x="194" y="727" class="tiny">快递站</text>
+<rect x="154" y="739" width="80" height="26" rx="13" fill="#a8c9bb" stroke="#fff9e9" stroke-width="3"/><text x="194" y="757" class="tiny">后勤服务</text>
+<rect x="165" y="868" width="349" height="255" rx="18" fill="#d4e2c7" stroke="#faf7e9" stroke-width="4"/>
+<rect x="182" y="889" width="210" height="213" rx="83" fill="#cf9078" stroke="#f6ede0" stroke-width="3"/>
+<rect x="207" y="928" width="160" height="135" rx="4" fill="#85b680" stroke="#eaf1df" stroke-width="3"/>
+<path d="M287 928v135 M207 995h160 M267 928v19h40v-19 M267 1063v-19h40v19" fill="none" stroke="#eaf1df" stroke-width="2"/>
+<g fill="#8fb9a4" stroke="#f4f5e7" stroke-width="3"><rect x="402" y="891" width="91" height="60" rx="3"/><rect x="402" y="963" width="91" height="60" rx="3"/><rect x="402" y="1035" width="91" height="60" rx="3"/></g>
+<path d="M447 892v58 M403 921h89 M447 964v58 M403 993h89 M447 1036v58 M403 1065h89" fill="none" stroke="#f4f5e7" stroke-width="2"/>
+<text x="287" y="1002" class="label">运动场</text>
+<!-- 研究生公寓在邮邮大学作为已投入使用的虚构宿舍。 -->
+<g fill="none" stroke="#c9c2b0" stroke-width="9" stroke-linejoin="round">
+ <path d="M164 1143H516 M164 1143V1290H516V1143 M294 1143V1289 M418 1143V1289 M164 1204H516"/>
+</g>
+<g class="building" fill="#82ada0">
+ <path d="M181 1174q0-9 9-9h56q10 0 10 10v14h-43v18h-20v-18h-12z"/>
+ <path d="M184 1212q9-5 16 3l37 40q5 5 15 3l11-2q9-1 10 8l-1 5q-1 7-9 8l-25 2q-8 0-15-7l-42-43q-6-7 3-17z"/>
+ <rect x="312" y="1170" width="100" height="35" rx="12"/>
+ <rect x="312" y="1220" width="100" height="33" rx="12"/>
+ <rect x="312" y="1257" width="100" height="26" rx="10"/>
+ <rect x="426" y="1169" width="95" height="37" rx="12"/>
+ <path d="M427 1238q0-11 11-11h39v-23h19v35q0 18-17 18h-52z"/>
+</g>
+<text x="343" y="1225" class="small">研究生公寓</text>
+<!-- 雁北园、雁南园宿舍 -->
+<g class="building" fill="#79a99e"><path d="M577 501h98v19h24v53h-21v-26h-79v34h-22z"/><path d="M567 630h34v42h19v-38h57v29h22v69h-23v-40h-53v42h-56z"/></g>
+<g fill="#d7e5d0" stroke="#f8f8e8" stroke-width="2"><rect x="604" y="542" width="64" height="32" rx="3"/><rect x="605" y="673" width="69" height="36" rx="3"/></g>
+<g fill="#91bdb0" stroke="#f7f8e8" stroke-width="2"><rect x="675" y="490" width="26" height="84" rx="12"/><rect x="675" y="648" width="25" height="82" rx="12"/></g>
+<!-- 雁北园保持整体地块；雁南园按 S1—S6 的轮廓和廊道重绘。 -->
+<g fill="none" stroke="#b9c7b5" stroke-width="7" stroke-linecap="square" stroke-linejoin="round">
+  <path d="M544 922H570L601 899H672 M544 987H578L615 962H674 M544 1058H578L615 1030H675 M544 1134H580L614 1108H675 M544 1214H580L616 1184H675"/>
+  <path d="M598 920v34 M598 987v33 M599 1057v33 M600 1135v41"/>
+</g>
+<g class="building" fill="#72a799">
+ 
+ <path d="M566 866h112q19 0 19 18v49h-21v-44h-110z"/>
+ <path d="M608 946h66v-18h23v60h-22v-20h-67z"/>
+ <path d="M608 1014h66v-23h23v65h-22v-18h-67z"/>
+ <path d="M565 1086h109v-25h23v92h-22v-45H565z"/>
+ <path d="M577 1155q0-9 10-9h12q10 0 10 10v37h22v39h45v-9q0-9 9-9h5q9 0 9 9v46q0 10-10 10h-92q-20 0-20-20z"/>
+</g>
+<g fill="#fff7e5" opacity=".55">
+ <path d="M575 873h5v5h-5zm12 0h5v5h-5zm12 0h5v5h-5zm12 0h5v5h-5zm12 0h5v5h-5zm12 0h5v5h-5zm12 0h5v5h-5z"/>
+ <path d="M615 952h5v5h-5zm12 0h5v5h-5zm12 0h5v5h-5zm12 0h5v5h-5z M615 1021h5v5h-5zm12 0h5v5h-5zm12 0h5v5h-5zm12 0h5v5h-5z M575 1093h5v5h-5zm12 0h5v5h-5zm12 0h5v5h-5zm12 0h5v5h-5zm12 0h5v5h-5z"/>
+</g>
+
+<text x="589" y="878" class="tiny">S1</text><text x="645" y="878" class="tiny">S2</text><text x="640" y="961" class="tiny">S3</text><text x="640" y="1029" class="tiny">S4</text><text x="641" y="1103" class="tiny">S5</text><text x="635" y="1269" class="tiny">S6</text>
+<text x="580" y="982" class="small" transform="rotate(90 580 982)">雁南园</text>
+<text x="625" y="518" class="tiny">E 区</text><text x="688" y="529" class="tiny">D2</text><text x="632" y="559" class="small">雁北园</text><text x="584" y="686" class="tiny">B</text><text x="633" y="647" class="tiny">C 区</text><text x="688" y="685" class="tiny">D1</text><text x="639" y="695" class="small">学生公寓</text>
+<!-- 餐饮、办公、活动中心 -->
+<g class="building" fill="#c89480"><rect x="747" y="505" width="118" height="105" rx="15"/><rect x="747" y="633" width="118" height="110" rx="15"/><rect x="744" y="1153" width="166" height="99" rx="18"/></g>
+<g class="building" fill="#8fb6af"><rect x="900" y="505" width="113" height="105" rx="15"/><rect x="900" y="633" width="113" height="110" rx="15"/></g>
+<!-- 主楼入口和面向道路的服务窗口 -->
+<g fill="#f0d2b2" stroke="#fff9e9" stroke-width="2"><rect x="932" y="582" width="76" height="24" rx="3"/><rect x="901" y="634" width="22" height="74" rx="4"/><rect x="978" y="635" width="31" height="62" rx="4"/><rect x="978" y="701" width="31" height="39" rx="3"/></g>
+<text x="969" y="598" class="tiny">文创店</text><text x="912" y="675" class="tiny" transform="rotate(-90 912 675)">超市</text><text x="994" y="668" class="tiny" transform="rotate(-90 994 668)">服务</text><text x="994" y="726" class="tiny">咨询</text>
+<text x="805" y="556" class="small">风味餐厅</text><text x="805" y="689" class="small">教工餐厅</text><text x="827" y="1202" class="label">学生餐厅</text><text x="956" y="556" class="small">综合办公楼</text><text x="956" y="687" class="small">学生活动中心</text>
+<!-- 地标图书馆 -->
+<path class="building" fill="#df9c85" d="M1208 514a123 123 0 1 0 40 239v-77h-91v-47h114v-21a123 123 0 0 0-63-94z"/><path d="M1256 697q35-14 55-46q-7 68-57 95z" fill="#f4d4bc" stroke="#fff8e8" stroke-width="4"/>
+<rect x="1108" y="627" width="116" height="52" fill="#e8efe0" stroke="#f8f3e6" stroke-width="4"/>
+<g fill="none" stroke="#fff8e8" stroke-width="3"><path d="M1260 735q27-12 40-42 M1260 723q24-10 37-29 M1264 711q19-8 29-21"/><path d="M1277 699l12 9 M1285 691l14 9"/></g>
+<rect x="1269" y="577" width="32" height="22" fill="#b8d1c7" stroke="#fff9e9" stroke-width="2"/><text x="1285" y="592" class="tiny">东配楼</text><text x="1184" y="584" class="label">图书馆</text><text x="1184" y="609" class="tiny">LIBRARY</text>
+<!-- 东部学院区：北侧院落、两座独立学院楼及东侧连廊 -->
+<g class="building" fill="#96bab3">
+ <path d="M1410 509h175q19 0 19 19v69q0 12-13 12h-11q-12 0-12-12v-49h-133v22l18 8q9 4 9 14v19q0 11-11 11h-6l-42-13q-12-4-12-18v-63q0-19 19-19z"/>
+ <path d="M1408 661q5-8 15-5l50 16q11 4 8 15l-16 62q-3 11-14 8l-63-17q-10-3-7-14z"/>
+ <path d="M1519 629q4-7 12-5l57 15q16 4 16 20v93q0 12-12 12h-87q-13 0-13-12v-16q0-12 12-12h34v-17l-33-8q-11-3-9-14l4-16q3-11 14-8l38 9v-15l-33-8q-8-3-4-11z"/>
+</g>
+<rect x="1479" y="547" width="71" height="73" rx="2" fill="url(#grass)"/>
+<g fill="none" stroke="#b6ad9e" stroke-width="4"><path d="M1579 606v31h18v-31 M1579 613h18 M1579 621h18 M1579 629h18"/></g>
+<text x="1505" y="532" class="small">网络空间安全学院</text><text x="1428" y="696" class="tiny">数字媒体与</text><text x="1428" y="714" class="tiny">设计艺术学院</text><text x="1553" y="739" class="tiny">智能工程与自动化</text>
+<!-- 南部教学楼与水景 -->
+<path class="building" fill="#d99482" d="M787 831h199q15 0 15 15v76q0 79-91 79H787q-18 0-18-18V849q0-18 18-18z"/><text x="884" y="923" class="label">公共教学楼</text>
+<g class="building" fill="#d99482"><path d="M1107 819h187q17 0 17 16v148q0 16-17 16h-187q-16 0-16-16v-27q0-14 16-14h112v-63h-112q-16 0-16-15v-29q0-16 16-16z"/><path d="M1193 877q-36 0-36 33t36 33h55v-66z"/></g>
+<path d="M1200 877h48v66h-48" fill="none" stroke="#f2d3c2" stroke-width="3"/>
+<text x="1277" y="846" class="small" transform="rotate(90 1277 846)">教学实验综合楼</text><text x="1203" y="914" class="tiny">报告厅</text>
+<g class="building"><path fill="#d99482" d="M1422 820h150q15 0 15 15v49h-42v-12h-80v13q0 11-11 11h-31q-15 0-15-15v-46q0-15 14-15z"/>
+<path fill="#8fb9ae" d="M1544 882h43v125h-38v-14h-93v37h-47v-49q0-13 13-13h122z"/>
+<path fill="#d99482" d="M1546 1007h41v96q0 16-16 16h-147q-16 0-16-16v-72h42v55h96z"/></g>
+<rect x="1424" y="902" width="106" height="55" fill="url(#grass)"/><rect x="1465" y="1017" width="64" height="61" fill="url(#grass)"/>
+<text x="1501" y="850" class="small">智慧教学楼</text><text x="1563" y="909" class="tiny" transform="rotate(90 1563 909)">人文学院</text><text x="1434" y="990" class="tiny">马克思主义学院</text><text x="1501" y="1104" class="small">工程实验楼</text>
+<g fill="none" stroke="#b6ad9e" stroke-width="4"><path d="M1418 1049v43h20v-43 M1418 1058h20 M1418 1068h20 M1418 1078h20"/></g>
+<path class="building" fill="#99bbb4" d="M1415 1157h36v48h94v-48h39v103h-169z"/><text x="1500" y="1206" class="small">理学楼</text>
+<!-- 临街建筑入口只标示示意方向，并非室内坐标或真实导航数据 -->
+<g stroke="#718579" stroke-width="7" stroke-linecap="round"><path d="M1537 509h18 M1410 748l17 4 M1542 763h17 M1224 820h18 M1202 878h18 M1202 942h18 M1538 820h18 M1409 876v17 M1544 1158h18"/></g>
+<path d="M907 1033q35 5 53 18t49 9q25 12 42 1t48-7q42 0 83-21l-15 46-34 4-15 15-35-4-25 21-38-8-27 15-26-13-18-25-27-9z" fill="#a7c9ca" stroke="#eef6e8" stroke-width="4"/><text x="1048" y="1096" class="tiny">校园水景</text>
+<!-- 树丛及校门 -->
+<g class="leaf"><circle cx="554" cy="432" r="12"/><circle cx="580" cy="438" r="11"/><circle cx="608" cy="433" r="13"/><circle cx="637" cy="438" r="12"/><circle cx="665" cy="432" r="12"/><circle cx="693" cy="438" r="11"/><circle cx="760" cy="1110" r="10"/><circle cx="787" cy="1110" r="12"/><circle cx="816" cy="1110" r="11"/><circle cx="1255" cy="1110" r="12"/><circle cx="1284" cy="1110" r="11"/><circle cx="1312" cy="1110" r="10"/></g>
+<rect x="128" y="767" width="16" height="45" rx="8" fill="#738c73"/><rect x="1019" y="1287" width="50" height="15" rx="7" fill="#738c73"/><text x="103" y="795" class="small">西门</text><text x="1044" y="1326" class="small">南门</text><text x="1530" y="1331" class="tiny">邮邮大学 · 沙河校园灵感地图</text>
+</svg>

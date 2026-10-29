@@ -13,7 +13,7 @@ const nodes = computed(() =>
   props.world.npcs
     .filter((n) => n.id !== props.selected)
     .map((n, i) => {
-      const angle = (i * Math.PI * 2) / 9 - Math.PI / 2,
+      const angle = (i * Math.PI * 2) / (props.world.npcs.length - 1) - Math.PI / 2,
         x = 175 + Math.cos(angle) * 116,
         y = 145 + Math.sin(angle) * 105,
         r =

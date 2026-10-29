@@ -5,7 +5,7 @@ const seedCount = Number(process.argv[2] || 100);
 const metrics = evaluateSeeds(seedCount);
 const report = {
   engineVersion: ENGINE_VERSION,
-  scenario: "quality-N seeds; one open day at tick 2 vs no intervention",
+  scenario: "first teaching week, quality-N seeds; one open day at tick 2 vs no intervention",
   definitions: {
     activityDiversity:
       "mean distinct location/action-kind combinations per NPC across 28 steps",
@@ -14,19 +14,20 @@ const report = {
     crisisRate:
       "fraction of NPC steps with energy <10 or hunger >95 after action",
     planFulfillmentRate:
-      "unique fulfilled meal agreements / accepted meal agreements",
-    taskCompletionRate: "completed reports / all reports",
+      "unique fulfilled meal agreements / accepted meal agreements due during the observed first week; plansNotDue counts agreements due later",
+    taskCompletionRate: "completed reports and research tasks / all reports and research tasks",
     interventionChangedWorldRate:
-      "final positions/relationships differ from the no-intervention control; RNG cascades may contribute",
+      "positions/relationships at the same first-week endpoint differ from the no-intervention control; RNG cascades may contribute",
     beliefRevisionRate: "revised personal interpretations / all sourced personal interpretations; an explanation is not guaranteed to be accepted",
     beliefSourceErrors: "interpretations whose source event is missing or was not experienced by the owner; must be zero",
     activityFulfillmentRate: "held NPC-organized gatherings / proposed gatherings; requires preparation and actual attendance",
   },
   metrics,
 };
-fs.mkdirSync("docs/reports", { recursive: true });
+const reportPath = `internal-docs/reports/behavior-v${ENGINE_VERSION}.json`;
+fs.mkdirSync("internal-docs/reports", { recursive: true });
 fs.writeFileSync(
-  "docs/reports/behavior-v06.json",
+  reportPath,
   JSON.stringify(report, null, 2) + "\n",
 );
 console.table(
@@ -34,4 +35,4 @@ console.table(
     Object.entries(metrics).filter(([key]) => key !== "eventTypes"),
   ),
 );
-console.log("Saved docs/reports/behavior-v06.json");
+console.log(`Saved ${reportPath}`);

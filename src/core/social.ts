@@ -1,3 +1,5 @@
+import { isPrivateDorm } from "./campusLife.ts";
+import { isOnCampus } from "./holiday.ts";
 import { invitationDecision } from "./invitations.ts";
 export { invitationDecision } from "./invitations.ts";
 import { proposeAppointment, resolveAppointment } from "./plans.ts";
@@ -13,6 +15,9 @@ const contexts = [
   "参考书借阅",
   "活动海报的准备",
 ];
+// Later-added buildings reuse a suitable interaction theme rather than
+// indexing beyond the five original locations and producing undefined text.
+const socialContext = [0, 1, 2, 3, 4, 0, 2, 0, 1, 1, 1, 0, 1, 2, 1, 0, 3, 3, 1, 0, 0, 0, 0] as const;
 
 function resolve(world: World, a: AgentState, b: AgentState, invited = false, planId?: string) {
   const r = a.rel[b.id],
@@ -30,7 +35,7 @@ function resolve(world: World, a: AgentState, b: AgentState, invited = false, pl
     (t) => t.id === a.intent?.taskId || t.id === b.intent?.taskId,
   );
   const activity = world.activities.find((t) => t.id === a.intent?.activityId || t.id === b.intent?.activityId);
-  const topic = task ? `“${task.title}”的资料分工` : activity ? `“${activity.title}”里的兴趣交流` : contexts[a.loc];
+  const topic = task ? `“${task.title}”的资料分工` : activity ? `“${activity.title}”里的兴趣交流` : contexts[socialContext[a.loc]];
   const belief = briefReply(world, a, b, topic, { planId, taskId: task?.id, activityId: activity?.id });
   let type: EventType, delta: number, text: string, reason: string;
   let perspectives: { person: number; interpretation: string }[] = [];
@@ -134,7 +139,7 @@ export function runSocial(world: World) {
   ];
   for (const a of initiative) {
     if (
-      !a.intent ||
+      !isOnCampus(a.loc) || !a.intent ||
       paired.has(a.id) ||
       a.intent.kind === "task" ||
       a.intent.target === undefined
@@ -142,8 +147,8 @@ export function runSocial(world: World) {
       continue;
     const b = world.npcs[a.intent.target];
     const colocated =
-      b.loc === a.loc &&
-      ((a.loc !== 0 && a.loc !== 5) || world.rooms[a.id] === world.rooms[b.id]);
+      isOnCampus(b.loc) && b.intent?.kind !== "delivery_pickup" && b.loc === a.loc &&
+      (!isPrivateDorm(a.loc) || world.rooms[a.id] === world.rooms[b.id]);
     if (a.intent.kind === "appointment") {
       const met = resolveAppointment(world, a, b, colocated);
       paired.add(a.id);
@@ -179,7 +184,7 @@ export function runSocial(world: World) {
     paired.add(a.id);
     paired.add(b.id);
     const invitation = world.log(
-      `${a.name}邀请${b.name}一起${["聊聊天", "讨论作业", "吃顿饭", "看一会儿书", "准备活动"][a.loc]}。`,
+      `${a.name}邀请${b.name}一起${["聊聊天", "讨论作业", "吃顿饭", "看一会儿书", "准备活动"][socialContext[a.loc]]}。`,
       "invitation",
       [a.id, b.id],
       [a.last, b.last, ...a.intent.evidence],
@@ -218,13 +223,13 @@ export function runSocial(world: World) {
     }
   }
   for (const a of order) {
-    if (paired.has(a.id)) continue;
+    if (!isOnCampus(a.loc) || paired.has(a.id) || a.intent?.kind === "delivery_pickup") continue;
     const peers = order.filter(
       (b) =>
         b.id !== a.id &&
-        !paired.has(b.id) &&
+        !paired.has(b.id) && b.intent?.kind !== "delivery_pickup" &&
         b.loc === a.loc &&
-        ((a.loc !== 0 && a.loc !== 5) || world.rooms[a.id] === world.rooms[b.id]),
+        (!isPrivateDorm(a.loc) || world.rooms[a.id] === world.rooms[b.id]),
     );
     if (!peers.length) continue;
     // Existing affection biases whom to approach; no forced pairing by story.

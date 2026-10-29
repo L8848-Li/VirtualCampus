@@ -1,4 +1,5 @@
 import type { World } from "../engine.ts";
+import { isPrivateDorm } from "./campusLife.ts";
 import type { AgentPlan, AgentState, Belief } from "./types.ts";
 import { clamp } from "./decision.ts";
 
@@ -33,7 +34,7 @@ export function noteAbsence(world: World, observer: AgentState, plan: AgentPlan,
 // A short reply must actually occur before anyone can interpret it as rejection.
 export function briefReply(world: World, observer: AgentState, speaker: AgentState, topic: string,
   context: { planId?: string; taskId?: string; activityId?: string } = {}) {
-  if (observer.loc !== speaker.loc || ((observer.loc === 0 || observer.loc === 5) && world.rooms[observer.id] !== world.rooms[speaker.id])) return null;
+  if (observer.loc !== speaker.loc || (isPrivateDorm(observer.loc) && world.rooms[observer.id] !== world.rooms[speaker.id])) return null;
   const busy = speaker.plan?.kind === "task" && speaker.plan.stage === "working";
   if (speaker.energy >= 35 && speaker.social >= 10 && !busy) return null;
   const account = speaker.energy < 35
@@ -65,7 +66,7 @@ export function briefReply(world: World, observer: AgentState, speaker: AgentSta
 // The listener reads their own belief; the speaker supplies only their own account.
 // A repeated explanation never counts as independent evidence a second time.
 export function explainBelief(world: World, listener: AgentState, speaker: AgentState) {
-  if (listener.loc !== speaker.loc || ((listener.loc === 0 || listener.loc === 5) && world.rooms[listener.id] !== world.rooms[speaker.id])) return false;
+  if (listener.loc !== speaker.loc || (isPrivateDorm(listener.loc) && world.rooms[listener.id] !== world.rooms[speaker.id])) return false;
   if (speaker.energy < 20) return false;
   const candidate = listener.beliefs
     .filter((b) => b.subject === speaker.id && b.status === "unresolved" && !b.explanationEvent)

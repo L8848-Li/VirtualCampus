@@ -3,12 +3,14 @@ import type { Homework } from './types.ts';
 
 // The first fictional maths class publishes the same assignment to all enrolled students.
 export function assignHomework(world: World): Homework[] {
-  return world.npcs.map((person) => {
-    const id = `math-homework-${person.id}`;
-    const event = world.log(`${person.name}收到高等数学练习，将在第六天夜晚截止。`, 'homework_assigned', [person.id], [],
-      { homeworkId: id, reason: '课程统一发布作业；是否腾出时间完成由本人决定', dueTick: 23 }, 2);
+  const week = Math.floor(world.tick / 28);
+  return world.npcs.filter((person) => person.education === 'undergraduate' && world.enrollments.some(e => e.owner === person.id && e.courseIds.includes('math'))).map((person) => {
+    const id = `math-homework-${person.id}${week ? `-week-${week + 1}` : ""}`;
+    const deadline = world.tick + 23;
+    const event = world.log(`${person.name}收到第 ${week + 1} 周高等数学练习，将在本周第六天夜晚截止。`, 'homework_assigned', [person.id], [],
+      { homeworkId: id, reason: '课程统一发布作业；是否腾出时间完成由本人决定', dueTick: deadline }, 2);
     world.remember(person, event);
-    return { id, owner: person.id, title: '高等数学练习', courseId: 'math', deadline: 23,
+    return { id, owner: person.id, title: `第 ${week + 1} 周高等数学练习`, courseId: 'math', deadline,
       progress: 0, required: 2, status: 'open', lastEvent: event };
   });
 }
@@ -24,7 +26,7 @@ export function expireHomework(world: World) {
 export function workHomework(world: World) {
   for (const homework of world.homework) {
     const person = world.npcs[homework.owner];
-    if (homework.status !== 'open' || person.intent?.kind !== 'homework' || person.intent.homeworkId !== homework.id) continue;
+    if (homework.status !== 'open' || world.tick > homework.deadline || person.loc !== (person.id % 2 ? 8 : 3) || person.intent?.kind !== 'homework' || person.intent.homeworkId !== homework.id) continue;
     homework.progress++;
     const complete = homework.progress >= homework.required;
     if (complete) homework.status = 'completed';

@@ -1,6 +1,6 @@
 {
   "name": "virtual-campus",
-  "version": "0.6.0",
+  "version": "0.16.0",
   "private": true,
   "type": "module",
   "description": "赛博校园：可解释、可复现的校园微型生命模拟器。",
@@ -16,7 +16,8 @@
     "dev": "vite --host 127.0.0.1 --port 8765 --strictPort",
     "start": "vite --host 127.0.0.1 --port 8765 --strictPort",
     "check": "vue-tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --no-file-parallelism",
+    "test:replay:full": "node scripts/test-full-replay.mjs",
     "test:watch": "vitest",
     "build": "npm run check && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 8765 --strictPort",

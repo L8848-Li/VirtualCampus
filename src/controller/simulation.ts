@@ -1,30 +1,19 @@
 import { computed, reactive, ref, shallowRef } from "vue";
 import { World, TOTAL_TICKS, MAX_INPUTS } from "../engine.ts";
-import type { WorldSnapshot, ViewState } from "../core/types.ts";
+import { createSnapshotCapture } from "./snapshot.ts";
+import type { WorldSnapshot, ViewState, SaveData } from "../core/types.ts";
 const STORAGE_KEY = import.meta.env.DEV && new URLSearchParams(location.search).has("perf")
-  ? "virtualcampus.performance-test.v6" : "virtualcampus.save.v6";
-const isId = (id: unknown): id is number =>
-  Number.isInteger(id) && Number(id) >= 0 && Number(id) < 10;
+  ? "virtualcampus.performance-test.v16.0" : "virtualcampus.save.v16.0";
 export function createSimulation() {
   let world = new World();
+  const isId = (id: unknown): id is number =>
+    Number.isInteger(id) && Number(id) >= 0 && Number(id) < world.npcs.length;
+  // View-only changes do not alter the simulation. Reuse its last verified
+  // save rather than serializing and hashing the entire history again.
+  let savedWorld: SaveData | undefined;
   let timer: ReturnType<typeof setInterval> | null = null;
-  const capture = (): WorldSnapshot =>
-    JSON.parse(
-      JSON.stringify({
-        version: world.version,
-        seed: world.seed,
-        tick: world.tick,
-        npcs: world.npcs,
-        events: world.events,
-        rooms: world.rooms,
-        groups: world.groups,
-        party: world.party,
-        inputs: world.inputs,
-        tasks: world.tasks,
-        homework: world.homework,
-        activities: world.activities,
-      }),
-    );
+  const captureWorld = createSnapshotCapture();
+  const capture = (): WorldSnapshot => captureWorld(world);
   const snapshot = shallowRef(capture());
   const view = reactive<ViewState>({
     selected: 0,
@@ -34,6 +23,7 @@ export function createSimulation() {
     filter: "important",
   });
   const seed = ref(world.seed),
+    livingEnabled = ref(world.livingEnabled),
     speed = ref(2200),
     running = ref(false),
     notice = ref("干预改变环境；每个人依然有自己的打算。");
@@ -57,9 +47,10 @@ export function createSimulation() {
   }
   function persist() {
     try {
+      savedWorld ??= world.toSave();
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ world: world.toSave(), view }),
+        JSON.stringify({ world: savedWorld, view }),
       );
       saveState.value = "✓ 已自动保存到本机";
     } catch {
@@ -67,6 +58,7 @@ export function createSimulation() {
     }
   }
   function publish() {
+    savedWorld = undefined;
     snapshot.value = capture();
     persist();
   }
@@ -79,7 +71,7 @@ export function createSimulation() {
     if (world.step()) {
       if (world.tick === TOTAL_TICKS) {
         stop();
-        notice.value = "七日观察结束，可以回看关系、导出存档或重放。";
+        notice.value = "六周观察结束，可以回看关系、导出存档或重放。";
       }
       publish();
     }
@@ -104,7 +96,7 @@ export function createSimulation() {
   }
   function reset() {
     try {
-      const next = new World(seed.value || "campus-2026");
+      const next = new World(seed.value || "campus-2026", { livingEnabled: livingEnabled.value });
       stop();
       world = next;
       detailId.value = null;
@@ -152,14 +144,15 @@ export function createSimulation() {
     persist();
   }
   function exportFile() {
+    savedWorld ??= world.toSave();
     const url = URL.createObjectURL(
-      new Blob([JSON.stringify({ world: world.toSave(), view }, null, 2)], {
+      new Blob([JSON.stringify({ world: savedWorld, view }, null, 2)], {
         type: "application/json",
       }),
     );
     const a = document.createElement("a");
     a.href = url;
-    a.download = `campus-${world.version}-day${Math.min(7, Math.floor(world.tick / 4) + 1)}.json`;
+    a.download = `campus-${world.version}-day${Math.min(42, Math.floor(world.tick / 4) + 1)}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     notice.value = "已导出带版本与校验信息的可重放存档。";
@@ -173,8 +166,9 @@ export function createSimulation() {
       world = next;
       loadView(payload.view);
       seed.value = world.seed;
+      livingEnabled.value = world.livingEnabled;
       detailId.value = null;
-      notice.value = `✓ 已导入并验证：${world.tick} / 28 时段，模拟已暂停。`;
+      notice.value = `✓ 已导入并验证：${world.tick} / 168 时段，模拟已暂停。`;
       publish();
     } catch (e) {
       notice.value = `导入失败：${e instanceof SyntaxError ? "无效的 JSON 文件" : (e as Error).message}`;
@@ -187,8 +181,9 @@ export function createSimulation() {
       world = World.fromSave(payload.world);
       loadView(payload.view);
       seed.value = world.seed;
+      livingEnabled.value = world.livingEnabled;
       snapshot.value = capture();
-      notice.value = `已恢复本机存档：${world.tick} / 28 时段，模拟已暂停。`;
+      notice.value = `已恢复本机存档：${world.tick} / 168 时段，模拟已暂停。`;
       saveState.value = "✓ 已恢复本机存档";
     }
   } catch {
@@ -203,6 +198,7 @@ export function createSimulation() {
     snapshot,
     view,
     seed,
+    livingEnabled,
     speed,
     running,
     notice,

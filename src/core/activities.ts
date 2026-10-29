@@ -1,20 +1,32 @@
+import { isPrivateDorm } from "./campusLife.ts";
 import type { World } from "../engine.ts";
-import type { AgentState, CampusActivity } from "./types.ts";
+import type { AgentState, CampusActivity, LocationId } from "./types.ts";
 import { invitationDecision } from "./invitations.ts";
 import { clamp } from "./decision.ts";
+import { isClubMember } from "./clubs.ts";
+import { places } from "./config.ts";
 
 const together = (world: World, a: AgentState, b: AgentState) =>
-  a.loc === b.loc && ((a.loc !== 0 && a.loc !== 5) || world.rooms[a.id] === world.rooms[b.id]);
+  a.loc === b.loc && (!isPrivateDorm(a.loc) || world.rooms[a.id] === world.rooms[b.id]);
+
+// The project keeps one shared workspace for its lifetime. It is included in
+// invitations, so every participant can make their own informed choice.
+export function projectWorkspace(organizer: Pick<AgentState, "id" | "interest">): LocationId {
+  if (organizer.interest === "机器人制作") return 18;
+  return ([14, 12, 18, 8] as const)[organizer.id % 4];
+}
 
 export function inviteToActivity(world: World, activity: CampusActivity, guest: AgentState, parent: number) {
   const organizer = world.npcs[activity.organizer];
+  const club = activity.clubId ? world.clubs.clubs.find(c => c.id === activity.clubId) : undefined;
+  if (activity.clubId && (!club || !isClubMember(club, organizer.id) || !isClubMember(club, guest.id))) return;
   if (activity.status !== "preparing" || world.tick >= activity.dueTick ||
       guest.id === organizer.id || activity.invited.includes(guest.id) || !together(world, organizer, guest)) return;
   const invitation = world.log(
-    `${organizer.name}当面邀请${guest.name}参加自己筹办的“${activity.title}”。`,
+    `${organizer.name}当面邀请${guest.name}参加自己筹办的“${activity.title}”，并说明准备地点是${places[activity.preparationLocation ?? activity.location]}。`,
     "activity_invited", [organizer.id, guest.id], [parent, activity.lastEvent],
-    { activityId: activity.id, dueTick: activity.dueTick, location: 4,
-      reason: "在实际相处中说出活动的主题和时间；未收到邀请的人不会自动知道" }, 3,
+    { activityId: activity.id, dueTick: activity.dueTick, location: 4, preparationLocation: activity.preparationLocation ?? activity.location,
+      reason: "在实际相处中说出活动的主题、时间和准备地点；未收到邀请的人不会自动知道" }, 3,
   );
   activity.invited.push(guest.id);
   const anticipated = { ...guest, social: Math.min(100, guest.social + 35), hunger: Math.min(60, guest.hunger) };
@@ -28,7 +40,7 @@ export function inviteToActivity(world: World, activity: CampusActivity, guest: 
     { activityId: activity.id, dueTick: activity.dueTick, reason: response.reason, score: response.score }, 3,
   );
   guest.activityInvitations.push({ activityId: activity.id, title: activity.title, organizer: organizer.id,
-    dueTick: activity.dueTick, accepted: response.accepted, sourceEvent: id, preparationGoal: 2 });
+    dueTick: activity.dueTick, accepted: response.accepted, sourceEvent: id, preparationGoal: 2, preparationLocation: activity.preparationLocation });
   if (response.accepted) activity.members.push(guest.id);
   activity.lastEvent = id;
   world.remember(organizer, invitation);
@@ -43,26 +55,29 @@ export function considerActivity(world: World, a: AgentState, b: AgentState, par
       !encounter.people.includes(a.id) || !encounter.people.includes(b.id)) return;
   // One personal project in this seven-day prototype. The organizer and outcome
   // emerge from an actual positive encounter, personality, needs and a keyed draw.
-  if (!world.activities.length && world.tick >= 4 && world.tick <= 16) {
+  if (!world.activities.some((item) => Math.floor(item.createdTick / 28) === Math.floor(world.tick / 28)) && world.tick < 140 && world.tick % 28 >= 4 && world.tick % 28 <= 16) {
     for (const organizer of [a, b]) {
       if (organizer.energy < 40 || organizer.hunger > 75) continue;
       const willingness = 0.12 + organizer.ext * 0.3 + (organizer.home === 4 ? 0.24 : 0);
       if (world.sample("activity-idea", world.tick, organizer.id) >= willingness) continue;
-      let dueTick = world.tick + 6;
-      while (dueTick % 4 !== 2) dueTick++;
+      const isProject = organizer.interest === "机器人制作" || organizer.id % 3 === 1;
+      let dueTick = world.tick + (isProject ? 10 : 6);
+      while (dueTick % 4 !== 2 || (isProject && Math.floor(dueTick / 4) % 7 < 5)) dueTick++;
+      if (dueTick >= 168) continue;
       const activityId = `activity-${world.tick}-${organizer.id}`;
-      const title = `${organizer.interest}分享会`;
+      const title = isProject ? `${organizer.interest}数字创作项目` : `${organizer.interest}分享会`;
+      const preparationLocation = isProject ? projectWorkspace(organizer) : 4;
       const id = world.log(
-        `${organizer.name}聊起自己的兴趣，决定试着在第 ${Math.floor(dueTick / 4) + 1} 天午后筹办一场“${title}”。`,
+        `${organizer.name}聊起自己的兴趣，决定试着在第 ${Math.floor(dueTick / 4) + 1} 天午后展示“${title}”。`,
         "activity_proposed", [organizer.id], [parent],
-        { activityId, dueTick, location: 4, reason: "一次实际的正向相处激发了个人愿望；需要自己准备和邀请伙伴，结果尚未确定" }, 4,
+        { activityId, dueTick, location: 4, preparationLocation, reason: `一次实际的正向相处激发了个人愿望；计划在${places[preparationLocation]}准备，需要邀请伙伴，结果尚未确定` }, 4,
       );
-      const activity: CampusActivity = { id: activityId, title, organizer: organizer.id,
-        createdTick: world.tick, dueTick, location: 4, status: "preparing", progress: 0, required: 4,
+      const activity: CampusActivity = { kind: isProject ? "project" : "gathering", preparationLocation, id: activityId, title, organizer: organizer.id,
+        createdTick: world.tick, dueTick, location: 4, status: "preparing", progress: 0, required: isProject ? 6 : 4,
         invited: [], members: [organizer.id], attendees: [], contributions: {}, lastEvent: id };
       world.activities.push(activity);
       organizer.activityInvitations.push({ activityId, title, organizer: organizer.id,
-        dueTick, accepted: true, sourceEvent: id, preparationGoal: activity.required });
+        dueTick, accepted: true, sourceEvent: id, preparationGoal: activity.required, preparationLocation: activity.preparationLocation });
       world.remember(organizer, id);
       break;
     }
@@ -76,9 +91,11 @@ export function considerActivity(world: World, a: AgentState, b: AgentState, par
 export function workActivities(world: World) {
   for (const activity of world.activities) {
     if (activity.status !== "preparing" || world.tick >= activity.dueTick) continue;
-    const workers = world.npcs.filter((n) => n.loc === activity.location &&
-      n.intent?.kind === "activity_prepare" && n.intent.activityId === activity.id && activity.members.includes(n.id));
+    const workers = world.npcs.filter((n) => n.loc === (activity.preparationLocation ?? activity.location) &&
+      n.intent?.kind === "activity_prepare" && n.intent.activityId === activity.id && activity.members.includes(n.id) &&
+      (!activity.clubId || world.clubs.clubs.some(c => c.id === activity.clubId && isClubMember(c, n.id))));
     if (!workers.length) continue;
+    const phase = activity.kind === "project" ? (activity.progress < 2 ? "查找资料" : activity.progress < 4 ? "制作原型" : "调试作品") : "准备材料";
     for (const n of workers) {
       activity.contributions[n.id] = (activity.contributions[n.id] || 0) + 2;
       activity.progress += 2;
@@ -87,10 +104,10 @@ export function workActivities(world: World) {
     }
     activity.progress = Math.min(activity.required, activity.progress);
     const id = world.log(
-      `${workers.map((n) => n.name).join("、")}为“${activity.title}”准备了材料，进度 ${activity.progress}/${activity.required}。`,
+      `${workers.map((n) => n.name).join("、")}在${places[activity.preparationLocation ?? activity.location]}为“${activity.title}”${phase}，进度 ${activity.progress}/${activity.required}。`,
       "activity_progress", workers.map((n) => n.id), [activity.lastEvent, ...workers.map((n) => n.last)],
-      { activityId: activity.id, progress: activity.progress, required: activity.required,
-        reason: "只有实际选择筹备并来到社团中心的参与者才能推进；接受邀请本身不增加进度" }, 3,
+      { activityId: activity.id, location: activity.preparationLocation ?? activity.location, phase, progress: activity.progress, required: activity.required,
+        reason: "只有实际到准备地点投入的参与者才能推进；接受邀请本身不增加进度" }, 3,
     );
     activity.lastEvent = id;
     for (const n of workers) world.remember(n, id);
@@ -101,7 +118,8 @@ export function resolveActivities(world: World) {
   for (const activity of world.activities) {
     if (activity.status !== "preparing" || world.tick < activity.dueTick) continue;
     const attendees = world.npcs.filter((n) => n.loc === activity.location &&
-      n.intent?.kind === "activity_attend" && n.intent.activityId === activity.id && activity.members.includes(n.id));
+      n.intent?.kind === "activity_attend" && n.intent.activityId === activity.id && activity.members.includes(n.id) &&
+      (!activity.clubId || world.clubs.clubs.some(c => c.id === activity.clubId && isClubMember(c, n.id))));
     activity.attendees = attendees.map((n) => n.id);
     const held = activity.progress >= activity.required && activity.attendees.includes(activity.organizer) && attendees.length >= 2;
     activity.status = held ? "held" : "cancelled";

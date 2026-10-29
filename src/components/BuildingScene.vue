@@ -1,16 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { profiles } from '../core/config.ts';
+import { weeklyMenu } from '../core/campusLife.ts';
 import type { AgentState, LocationId } from '../core/types.ts';
 import AvatarIcon from './AvatarIcon.vue';
-const props = defineProps<{ place: LocationId; people: AgentState[] }>();
+const props = defineProps<{ place: LocationId; people: AgentState[]; tick: number }>();
 defineEmits<{ select: [id: number] }>();
 // A visual grouping of recorded actions, not a claim about exact indoor coordinates.
 function area(person: AgentState) {
+  if (person.intent?.kind === 'lab') return '实验课';
   if (person.intent?.kind === 'task') return '小组事务';
   if (person.intent?.kind === 'homework') return '课程练习';
   if (person.action.includes('上') && person.action.includes('课程')) return '课堂';
   if (person.action.includes('休息')) return '休息';
+  if (person.action.includes('洗衣') || person.action.includes('整理宿舍')) return '宿舍日常';
+  if (person.action.includes('快递')) return '取快递';
+  if (person.action.includes('排队')) return '排队等餐';
   if (person.action.includes('吃饭') || person.action.includes('餐')) return '用餐';
   if (person.action.includes('自习') || person.action.includes('学习') || person.action.includes('练习')) return '学习';
   if (person.action.includes('社团') || person.action.includes('活动')) return '活动';
@@ -28,6 +33,7 @@ const groups = computed(() => {
 <template>
   <section class="indoor-scene" aria-label="建筑内活动">
     <div class="indoor-title"><strong>建筑里的这一刻</strong><small>按实际行动分组 · 位置为示意</small></div>
+    <p v-if="place === 2 || place === 6 || place === 13">本周虚构菜单：{{ weeklyMenu(tick, place) }}</p>
     <div v-if="groups.length" class="indoor-areas">
       <div v-for="group in groups" :key="group.name" class="indoor-area">
         <span class="indoor-area-name">{{ group.name }} <small>{{ group.members.length }} 人</small></span>

@@ -54,7 +54,7 @@ export function preparePlans(world: World) {
       p.kind === "task" &&
       world.tasks.find((t) => t.id === p.taskId)?.status === "completed"
     ) {
-      finishPlan(world, n, "fulfilled", "共同事务已经完成");
+      finishPlan(world, n, "cancelled", "共同事务已经完成，自己的工作计划未继续完成");
       continue;
     }
     if (
@@ -96,16 +96,14 @@ export function proposeAppointment(
 ) {
   if (
     active(a.plan) ||
-    active(b.plan) ||
     world.tick - a.lastPlanTick < 4 ||
-    world.tick - b.lastPlanTick < 4 ||
-    a.rel[b.id].aff < 12 ||
-    b.rel[a.id].aff < 4
+    a.rel[b.id].aff < 12
   )
     return;
   let due = world.tick + 1;
   while (due % 4 !== 1) due++;
-  if (due >= 28) return;
+  if (due >= 168) return;
+  const receiverBusy = active(b.plan) || world.tick - b.lastPlanTick < 4;
   a.lastPlanTick = world.tick;
   b.lastPlanTick = world.tick;
   const planId = `meal-${world.tick}-${a.id}-${b.id}`;
@@ -131,27 +129,27 @@ export function proposeAppointment(
     hunger: Math.min(60, b.hunger),
   };
   const response = invitationDecision(anticipated, a.id, () => world.rand());
+  const accepted = response.accepted && !receiverBusy;
   const agreed = world.log(
-    response.accepted
+    accepted
       ? `${b.name}答应了。两人记下了午间在食堂见面的约定。`
       : `${b.name}没有答应这次饭约，想先给自己留一些自由时间。`,
-    response.accepted ? "plan_accepted" : "plan_declined",
+    accepted ? "plan_accepted" : "plan_declined",
     [b.id, a.id],
     [proposal],
     {
-      reason: response.accepted
+      reason: accepted
         ? "按关系与预期社交需求独立接受，未来仍可能被迫中断"
         : "对方依据自己的状态与关系独立拒绝未来的饭约",
       dueTick: due,
       location: 2,
       planId,
-      score: response.score,
     },
     4,
   );
   world.remember(a, agreed);
   world.remember(b, agreed);
-  if (!response.accepted) return;
+  if (!accepted) return;
   const base = {
     id: planId,
     kind: "appointment" as const,
@@ -175,7 +173,12 @@ export function resolveAppointment(
 ): boolean {
   const p = a.plan;
   if (!active(p) || p.kind !== "appointment") return false;
-  if (colocated && active(b.plan) && b.plan.id === p.id) {
+  if (a.intent?.kind !== "appointment" || a.intent.target !== b.id) return false;
+  if (a.loc !== p.location) {
+    finishPlan(world, a, "cancelled", "临时改去别处，没有在约定地点等待");
+    return false;
+  }
+  if (colocated && b.loc === p.location && b.intent?.kind === "appointment" && b.intent.target === a.id && active(b.plan) && b.plan.id === p.id) {
     p.stage = "fulfilled";
     b.plan.stage = "fulfilled";
     const id = world.log(
@@ -199,7 +202,7 @@ export function resolveAppointment(
   p.stage = "waiting";
   p.attempts++;
   const id = world.log(
-    `${a.name}到了约好的食堂，暂时还没有看到${b.name}。`,
+    `${a.name}在约好的食堂等待${b.name}赴约。`,
     "plan_waiting",
     [a.id],
     [p.lastEvent, a.last],

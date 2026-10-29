@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from "vue";
 import type { CampusEvent, WorldSnapshot } from "../core/types.ts";
+import { ENGINE_VERSION } from "../core/config.ts";
 import { clock, labels } from "../ui/format.ts";
 const props = defineProps<{
   event: CampusEvent | null;
@@ -25,10 +26,10 @@ watch(
     <button class="dialog-close" @click="emit('close')">关闭 ×</button>
     <div id="detailbody">
       <template v-if="help"
-        ><span class="eyebrow">欢迎来到七日观察室</span>
+        ><span class="eyebrow">欢迎来到校园观察室</span>
         <h2>你改变环境，他们决定怎么生活。</h2>
-        <p>每步一个时段，一周共 28 步。动画只负责呈现，不改变模拟结果。</p>
-        <p>首页使用沙河校区示意图。点击地图圈点可在右侧查看完整人物名单；使用加减按钮缩放，放大后拖动地图。人物故事可在上方切换查看。</p>
+        <p>每步一个时段，六周试验场景共 168 步。动画只负责呈现，不改变模拟结果。</p>
+        <p>首页使用参考沙河校区布局重新绘制的邮邮大学地图。点击地图圈点可在右侧查看完整人物名单；使用底部加减按钮缩放，放大后拖动地图；人物故事与学业可在顶部切换查看。</p>
         <p>
           点击角色档案的 ☆
           关注最多三人，跟随观察持续高亮角色；关系图支持切换双方视角。
@@ -43,7 +44,7 @@ watch(
           有人会在正向相处后自主发起兴趣小聚，邀请伙伴、准备材料。答应参加的人仍需自己腾出时间；准备不足或没有到场，活动也会落空。小组报告、个人作业与饭约同样按实际行动推进。
         </p>
         <p>
-          每次推进与干预都会本机保存。导入会校验后暂停恢复，游玩无需模型密钥。v0.6 使用独立存档空间，保留旧版本机记录，暂不支持跨版本导入。
+          每次推进与干预都会本机保存。导入会校验后暂停恢复，游玩无需模型密钥。v{{ ENGINE_VERSION }} 使用独立存档空间，保留旧版本机记录，暂不支持跨版本导入。
         </p></template
       ><template v-else-if="event"
         ><span class="eyebrow"

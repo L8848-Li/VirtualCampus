@@ -2,7 +2,7 @@ import { test } from "vitest";
 import assert from "node:assert/strict";
 import { World } from "../src/engine.ts";
 import { chooseAction } from "../src/core/decision.ts";
-import { preparePlans, resolveAppointment, active } from "../src/core/plans.ts";
+import { preparePlans, resolveAppointment, active, proposeAppointment } from "../src/core/plans.ts";
 import { workTasks } from "../src/core/tasks.ts";
 import { evaluateSeeds } from "../src/core/evaluation.ts";
 import type { AgentPlan } from "../src/core/types.ts";
@@ -62,6 +62,8 @@ test("a waiting agent has a bounded grace period and learns only from its own ab
     [a, b] = w.npcs;
   a.plan = meal(1);
   b.plan = meal(0);
+  a.loc = 2;
+  a.intent = { kind: "appointment", target: b.id, evidence: [] };
   a.rel[1].aff = 20;
   a.rel[1].trust = 15;
   b.rel[0].aff = 20;
@@ -86,11 +88,48 @@ test("a fulfilled appointment requires an actual meeting of both independently c
   w.tick = 1;
   a.loc = 2;
   b.loc = 2;
+  a.intent = { kind: "appointment", target: b.id, evidence: [] };
+  b.intent = { kind: "appointment", target: a.id, evidence: [] };
   assert(resolveAppointment(w, a, b, true));
   assert.equal(a.plan.stage, "fulfilled");
   assert.equal(b.plan.stage, "fulfilled");
   assert(w.events.at(-1)?.parents.includes(1));
   assert.deepEqual(w.events.at(-1)?.people, [0, 1]);
+});
+
+test("a diverted diner cancels only their own appointment and does not claim to wait", () => {
+  const w = new World("diverted-meal"), [a, b] = w.npcs;
+  a.plan = meal(b.id); b.plan = meal(a.id);
+  a.intent = { kind: "appointment", target: b.id, evidence: [] };
+  b.intent = { kind: "appointment", target: a.id, evidence: [] };
+  w.tick = 1; a.loc = 6; b.loc = 2;
+  assert.equal(resolveAppointment(w, a, b, false), false);
+  assert.equal(a.plan.stage, "cancelled");
+  assert.equal(b.plan.stage, "pending");
+  assert(!w.events.some((event) => event.type === "plan_waiting"));
+  assert.equal(resolveAppointment(w, b, a, false), false);
+  assert.equal(b.plan.stage, "waiting");
+  assert.deepEqual(w.events.find((event) => event.type === "plan_waiting")?.people, [b.id]);
+});
+
+test("neither diversion together nor accidental co-location fulfills a meal appointment", () => {
+  const w = new World("diverted-together"), [a, b] = w.npcs;
+  a.plan = meal(b.id); b.plan = meal(a.id);
+  a.intent = { kind: "appointment", target: b.id, evidence: [] };
+  b.intent = { kind: "appointment", target: a.id, evidence: [] };
+  w.tick = 1; a.loc = b.loc = 6;
+  assert.equal(resolveAppointment(w, a, b, true), false);
+  assert.equal(resolveAppointment(w, b, a, true), false);
+  assert(!w.events.some((event) => event.type === "plan_fulfilled" || event.type === "plan_waiting"));
+
+  const other = new World("accidental-meal"), [c, d] = other.npcs;
+  c.plan = meal(d.id); d.plan = meal(c.id); c.loc = d.loc = 2;
+  c.intent = { kind: "appointment", target: d.id, evidence: [] };
+  d.intent = null; other.tick = 1;
+  assert.equal(resolveAppointment(other, c, d, true), false);
+  assert.equal(c.plan.stage, "waiting");
+  assert.equal(d.plan.stage, "pending");
+  assert(!other.events.some((event) => event.type === "plan_fulfilled"));
 });
 
 test("shared task progress comes only from eligible agents actually working there", () => {
@@ -110,6 +149,28 @@ test("shared task progress comes only from eligible agents actually working ther
   const event = w.events.find((e) => e.type === "task_completed")!;
   assert.equal(w.events[event.parents[0] - 1].type, "task_progress");
   assert(t.members.every((id) => event.people.includes(id)));
+});
+
+test("a teammate completing a task does not fulfill another person's unworked plan", () => {
+  const w = new World('other-completes'); const t = w.tasks.find(t => t.members.length >= 2)!;
+  const [a, b] = t.members.map(id => w.npcs[id]);
+  a.plan = { ...meal(b.id, t.lastEvent), id: 'work-other', kind: 'task', taskId: t.id, location: t.location };
+  b.loc = t.location; b.intent = { kind: 'task', taskId: t.id, evidence: [] }; t.progress = t.required - 1;
+  workTasks(w);
+  assert.equal(t.status, 'completed'); assert.equal(a.plan.stage, 'cancelled');
+  assert(!w.events.some(e => e.type === 'plan_fulfilled' && e.people.includes(a.id)));
+});
+
+test("a proposal does not inspect the receiver's private plans or feelings", () => {
+  const w = new World('private-invitation'); const [a,b] = w.npcs; w.tick = 4;
+  a.rel[b.id].aff = 20; b.rel[a.id].aff = -100;
+  const existing = meal(2); b.plan = existing;
+  proposeAppointment(w, a, b, 1);
+  assert(w.events.some(e => e.type === 'plan_proposed' && e.people.includes(a.id) && e.people.includes(b.id)));
+  assert(w.events.some(e => e.type === 'plan_declined'));
+  assert.equal(b.plan, existing);
+  assert.equal(a.plan, null);
+  assert.equal(w.events.find(e => e.type === 'plan_declined')?.data.score, undefined);
 });
 
 test("regrouping preserves task history and interrupts plans belonging to former teammates", () => {

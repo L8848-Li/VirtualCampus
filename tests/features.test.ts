@@ -60,9 +60,14 @@ test("the receiver independently accepts or declines, including due to needs", (
 test("an outdated sighting can lead to a missed meeting instead of omniscient pursuit", () => {
   const w = new World("missed");
   const [a, b] = w.npcs;
+  // The recruitment window now competes strongly with seeking friends. Use a
+  // later period and record a genuine prior sighting to isolate this behavior.
+  w.tick = 7;
+  a.loc = b.loc = 4;
+  const sighting = w.log('两人在活动中心见过面。', 'action', [a.id], [], { location: 4, observedPeople: [b.id] });
   Object.assign(a, { energy: 95, hunger: 0, social: 100 });
   a.rel[1] = { aff: 90, trust: 40, crush: 10 };
-  a.known[1] = { loc: 4, tick: 0, event: 1, missed: false };
+  a.known[1] = { loc: 4, tick: 7, event: sighting, missed: false };
   Object.assign(b, {
     energy: 95,
     hunger: 0,
@@ -71,6 +76,7 @@ test("an outdated sighting can lead to a missed meeting instead of omniscient pu
     ext: 0,
     home: 3,
   });
+  w.tick = 8;
   w.step();
   assert.notEqual(b.loc, 4);
   const missed = w.events.find(
@@ -113,14 +119,14 @@ test("corrupt, incompatible and malformed saves fail without accepting arbitrary
     /格式不兼容/,
   );
   assert.throws(
-    () => World.fromSave({ ...save, engineVersion: "0.1.0" }),
+    () => World.fromSave({ ...save, engineVersion: "0.15.1" }),
     /不同|跨版本/,
   );
   assert.throws(
     () => World.fromSave({ ...save, checksum: "00000000" }),
     /校验失败/,
   );
-  assert.throws(() => World.fromSave({ ...save, tick: 29 }), /允许范围/);
+  assert.throws(() => World.fromSave({ ...save, tick: 169 }), /允许范围/);
   assert.throws(
     () => World.fromSave({ ...save, inputs: [{ kind: "unknown", tick: 0 }] }),
     /干预/,
@@ -149,7 +155,10 @@ test("corrupt, incompatible and malformed saves fail without accepting arbitrary
 test("the weekly simulation produces social initiative, asymmetric reactions and daily highlights", () => {
   const types = new Set();
   let introvertCrush = false;
-  for (let seed = 0; seed < 35; seed++) {
+  let checkedDecline = false;
+  // The food-queue simulation changes the random sequence; seed 58 exercises a
+  // real tired recipient who declines, in addition to the broader sample.
+  for (const seed of [...Array.from({ length: 35 }, (_, i) => i), 58]) {
     const w = new World(`stories-${seed}`);
     while (w.tick < 28) {
       if (w.tick % 7 === 1) w.intervene("party");
@@ -157,6 +166,16 @@ test("the weekly simulation produces social initiative, asymmetric reactions and
     }
     for (const e of w.events) {
       types.add(e.type);
+      if (e.type === "declined") {
+        const invitation = w.events[e.parents[0] - 1];
+        assert.equal(invitation?.type, "invitation");
+        assert.deepEqual(e.people, [...invitation.people].reverse());
+        const parts = e.data.parts as Record<string, number>;
+        assert.equal(Object.values(parts).reduce((sum, value) => sum + value, 0), e.data.score);
+        assert(Number(e.data.score) < 48);
+        assert(!w.events.some((other) => other.tick === e.tick && other.type === "friendship" && other.people.includes(e.people[0]) && other.people.includes(e.people[1])));
+        checkedDecline = true;
+      }
       if (e.type === "crush" && w.npcs[e.people[0]].ext < 0.35)
         introvertCrush = true;
       assert(new Set(e.parents).size === e.parents.length);
@@ -190,6 +209,7 @@ test("the weekly simulation produces social initiative, asymmetric reactions and
   ])
     assert(types.has(type), `missing ${type}`);
   assert(introvertCrush, "introverts can develop a crush");
+  assert(checkedDecline, "a declined invitation retains its cause and does not create a friendship");
 });
 
 test("an agent can infer a routine from its own same-period observations", () => {

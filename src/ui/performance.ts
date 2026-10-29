@@ -12,7 +12,7 @@ export function enablePerformanceProbe() {
   document.addEventListener('click', (event) => {
     const button = (event.target as Element).closest('button');
     if (!button) return;
-    const label = button.textContent?.includes('下一时段') ? '推进时段'
+    const label = button.textContent?.trim() === '下一时段 →' ? '推进时段'
       : button.matches('.context-person') ? '打开人物'
       : button.getAttribute('aria-label') === '放大地图' ? '放大地图' : null;
     if (!label) return;
