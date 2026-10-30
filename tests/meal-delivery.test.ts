@@ -95,4 +95,6 @@ test('real six-week simulations generate private orders and actual pickups witho
   expect(expired).toBeGreaterThan(0);
   expect(ivOrdered).toBeGreaterThan(0);
   expect(ivCollected).toBeGreaterThan(0);
-});
+  // Twelve full semesters plus save reconstruction exceed Vitest's default
+  // five seconds on the shared CI runner; retain every seed and assertion.
+}, 30000);
