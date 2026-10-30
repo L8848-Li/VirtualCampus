@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from "vue";
-import type { CampusEvent, WorldSnapshot } from "../core/types.ts";
+import type { ActionScore, CampusEvent, WorldSnapshot } from "../core/types.ts";
 import { ENGINE_VERSION } from "../core/config.ts";
 import { clock, labels } from "../ui/format.ts";
 const props = defineProps<{
   event: CampusEvent | null;
   help: boolean;
   world: WorldSnapshot;
+  scores?: readonly Readonly<ActionScore>[];
 }>();
 const emit = defineEmits<{ close: []; event: [id: number] }>();
 const dialog = ref<HTMLDialogElement>();
@@ -66,7 +67,7 @@ watch(
           {{ (event.data.otherDelta || 0) > 0 ? "+" : ""
           }}{{ event.data.otherDelta }}
         </p>
-        <template v-if="event.data.scores"
+        <template v-if="scores"
           ><h4>行动评分 · 最高分被选中</h4>
           <div class="table-wrap">
             <table>
@@ -84,7 +85,7 @@ watch(
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(s, i) in event.data.scores" :key="i">
+                <tr v-for="(s, i) in scores" :key="i">
                   <td>
                     {{ s.action
                     }}{{
@@ -142,7 +143,7 @@ watch(
         </p>
         <details class="raw-data">
           <summary>展开规则记录</summary>
-          <pre>{{ JSON.stringify(event.data, null, 2) }}</pre>
+          <pre>{{ JSON.stringify({ ...event.data, ...(scores ? { scores } : {}) }, null, 2) }}</pre>
         </details></template
       >
     </div>

@@ -264,12 +264,23 @@ export interface SaveData {
   checksum: string;
   livingEnabled: boolean;
 }
+/** All simulation inputs and mutable state; derived indexes and UI stay outside. */
+export interface WorldState {
+  version: string; seed: string; random: { state: number }; tick: number;
+  inputs: Intervention[]; rooms: number[]; groups: number[]; party: number;
+  tasks: CampusTask[]; activities: CampusActivity[]; clubs: ClubState;
+  homework: Homework[]; library: LibraryState; assessments: Assessment[];
+  enrollments: Enrollment[]; deliveries: MealDelivery[]; livingEnabled: boolean;
+  living: LivingState[]; parcels: Parcel[]; laundry: Laundry[];
+  environment: Record<InterventionKind, number | null>; npcs: AgentState[];
+}
+export type CommittedEvent = Readonly<CampusEvent>;
 export interface WorldSnapshot {
   version: string;
   seed: string;
   tick: number;
   npcs: AgentState[];
-  events: CampusEvent[];
+  events: CommittedEvent[];
   rooms: number[];
   groups: number[];
   party: number;

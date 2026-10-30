@@ -1,0 +1,344 @@
+{
+  "date": "2026-10-30",
+  "method": "Same machine, Node 24.16.0 arm64; one cold world, seed 1 warmup, five seed 0 runs; step/snapshot/save in order. Separate original and current processes. No known project long test or autoplay during sampling; other system activity not controlled.",
+  "before": {
+    "metadata": {
+      "phase": "metadata",
+      "node": "v24.16.0",
+      "platform": "darwin",
+      "arch": "arm64",
+      "sourceDigest": "f52805ac68ff64ce34be93f8011308ebcdd4eecc33ec1248a63d90a7f0d6a5c5"
+    },
+    "cold": {
+      "step": {
+        "median": 0.51724999999999,
+        "p95": 0.787166999999954
+      },
+      "snapshot": {
+        "median": 0.6120410000000049,
+        "p95": 0.6880419999997684
+      },
+      "save": {
+        "median": 35.38208400000008,
+        "p95": 64.78000000000065
+      },
+      "synchronousTotal": {
+        "median": 36.619375999999875,
+        "p95": 66.06633199999942
+      }
+    },
+    "samples": [
+      {
+        "step": {
+          "median": 0.4185829999987618,
+          "p95": 0.5835829999996349
+        },
+        "snapshot": {
+          "median": 0.5992080000014539,
+          "p95": 0.676499999999578
+        },
+        "save": {
+          "median": 35.48374999999942,
+          "p95": 65.70466700000179
+        },
+        "synchronousTotal": {
+          "median": 36.660123999999996,
+          "p95": 66.60325000000012
+        }
+      },
+      {
+        "step": {
+          "median": 0.41441600000325707,
+          "p95": 0.5655420000002778
+        },
+        "snapshot": {
+          "median": 0.6069160000006377,
+          "p95": 0.6796250000006694
+        },
+        "save": {
+          "median": 35.89058300000033,
+          "p95": 65.9631670000017
+        },
+        "synchronousTotal": {
+          "median": 37.02366699999766,
+          "p95": 66.77745900000082
+        }
+      },
+      {
+        "step": {
+          "median": 0.36166700000103447,
+          "p95": 0.4758330000004207
+        },
+        "snapshot": {
+          "median": 0.6026670000028389,
+          "p95": 0.684000000001106
+        },
+        "save": {
+          "median": 35.90520899999683,
+          "p95": 66.07016700000167
+        },
+        "synchronousTotal": {
+          "median": 36.92470899999171,
+          "p95": 66.87266700000328
+        }
+      },
+      {
+        "step": {
+          "median": 0.38408399999752874,
+          "p95": 0.5459580000024289
+        },
+        "snapshot": {
+          "median": 0.6088749999980791,
+          "p95": 0.7207500000004075
+        },
+        "save": {
+          "median": 36.421417000001384,
+          "p95": 66.46504199999617
+        },
+        "synchronousTotal": {
+          "median": 37.465791999999055,
+          "p95": 67.4552079999994
+        }
+      },
+      {
+        "step": {
+          "median": 0.38629100000252947,
+          "p95": 0.4965830000001006
+        },
+        "snapshot": {
+          "median": 0.6053749999991851,
+          "p95": 0.6821249999993597
+        },
+        "save": {
+          "median": 35.99575000000186,
+          "p95": 65.78358299999672
+        },
+        "synchronousTotal": {
+          "median": 37.08749900000839,
+          "p95": 66.70912400000816
+        }
+      }
+    ],
+    "medianP95": {
+      "step": 0.5459580000024289,
+      "snapshot": 0.6821249999993597,
+      "save": 65.9631670000017,
+      "synchronousTotal": 66.77745900000082
+    },
+    "resources": {
+      "phase": "resources",
+      "maxRssMb": 395.75,
+      "cpu": {
+        "user": 42653622,
+        "system": 826227
+      }
+    },
+    "sourceUnchanged": true
+  },
+  "after": {
+    "metadata": {
+      "phase": "metadata",
+      "node": "v24.16.0",
+      "platform": "darwin",
+      "arch": "arm64",
+      "sourceDigest": "4ad0817d68c725819aa8b9e00dd0430e5963e6105e77c5b9a4c73e061342d219"
+    },
+    "cold": {
+      "step": {
+        "median": 0.6277080000000126,
+        "p95": 0.9550420000000059
+      },
+      "snapshot": {
+        "median": 0.33345800000000736,
+        "p95": 0.433290999999997
+      },
+      "save": {
+        "median": 0.48312500000000114,
+        "p95": 0.6265000000000214
+      },
+      "synchronousTotal": {
+        "median": 1.4204999999999472,
+        "p95": 1.807374999999979
+      }
+    },
+    "samples": [
+      {
+        "step": {
+          "median": 0.43912499999999,
+          "p95": 0.6967499999999518
+        },
+        "snapshot": {
+          "median": 0.3315830000000233,
+          "p95": 0.4199999999999591
+        },
+        "save": {
+          "median": 0.4707499999999527,
+          "p95": 0.6146250000000464
+        },
+        "synchronousTotal": {
+          "median": 1.2422919999999067,
+          "p95": 1.6395420000000058
+        }
+      },
+      {
+        "step": {
+          "median": 0.42287499999997635,
+          "p95": 0.5967499999999291
+        },
+        "snapshot": {
+          "median": 0.3354590000000144,
+          "p95": 0.4061659999999847
+        },
+        "save": {
+          "median": 0.48262499999998454,
+          "p95": 0.6115419999999858
+        },
+        "synchronousTotal": {
+          "median": 1.233624999999961,
+          "p95": 1.5142499999999472
+        }
+      },
+      {
+        "step": {
+          "median": 0.3940420000000131,
+          "p95": 0.5261660000001029
+        },
+        "snapshot": {
+          "median": 0.3272500000000491,
+          "p95": 0.4265829999999369
+        },
+        "save": {
+          "median": 0.47595800000010513,
+          "p95": 0.6280420000000504
+        },
+        "synchronousTotal": {
+          "median": 1.197334000000069,
+          "p95": 1.5353739999998197
+        }
+      },
+      {
+        "step": {
+          "median": 0.3914580000000569,
+          "p95": 0.5342920000000504
+        },
+        "snapshot": {
+          "median": 0.32370799999989686,
+          "p95": 0.40325000000007094
+        },
+        "save": {
+          "median": 0.45633300000008603,
+          "p95": 0.6092909999999847
+        },
+        "synchronousTotal": {
+          "median": 1.1938749999999345,
+          "p95": 1.525874999999587
+        }
+      },
+      {
+        "step": {
+          "median": 0.3730829999999514,
+          "p95": 0.47629200000005767
+        },
+        "snapshot": {
+          "median": 0.3208340000001044,
+          "p95": 0.4039589999999862
+        },
+        "save": {
+          "median": 0.4756250000000364,
+          "p95": 0.6095410000000356
+        },
+        "synchronousTotal": {
+          "median": 1.1800000000000637,
+          "p95": 1.4447089999998752
+        }
+      }
+    ],
+    "medianP95": {
+      "step": 0.5342920000000504,
+      "snapshot": 0.4061659999999847,
+      "save": 0.6115419999999858,
+      "synchronousTotal": 1.525874999999587
+    },
+    "resources": {
+      "phase": "resources",
+      "maxRssMb": 233.390625,
+      "cpu": {
+        "user": 2016485,
+        "system": 66482
+      }
+    },
+    "sourceUnchanged": true
+  },
+  "sizes": [
+    {
+      "seed": 0,
+      "events": 5002,
+      "beforeHistoryBytes": 11092894,
+      "afterHistoryBytes": 3491219,
+      "beforeWorldBytes": 11233992,
+      "afterStateBytes": 141088
+    },
+    {
+      "seed": 1,
+      "events": 4966,
+      "beforeHistoryBytes": 10802787,
+      "afterHistoryBytes": 3428112,
+      "beforeWorldBytes": 10944066,
+      "afterStateBytes": 141269
+    },
+    {
+      "seed": 99,
+      "events": 5086,
+      "beforeHistoryBytes": 10977458,
+      "afterHistoryBytes": 3495469,
+      "beforeWorldBytes": 11122144,
+      "afterStateBytes": 144676
+    }
+  ],
+  "browser": {
+    "early": {
+      "samples": 20,
+      "advanceP95": 33.4,
+      "personP95": 27.3,
+      "zoomP95": 25.6,
+      "sampledHeapPeakBytes": 16601269
+    },
+    "late": {
+      "domNodes": "438",
+      "heapPeakBytes": "29120841",
+      "measurements": "{\"推进时段\":[23.6,28.6,29.1,29.3,22.9,29.3,29.4,29.9,30.1,29.4,29.2,29,29.6,28.8,29.5,30,29.9,29.1,28.9,29],\"放大地图\":[29,22.8,26.2,27.9,26.1,22.3,24.8,20.1,24.1,24.9,28.1,28.7,29.3,27.5,22.8,21.9,29,28.2,24.6,23.3],\"打开人物\":[26.5,25.8,28.2,30.7,22.4,26.5,26,28.1,30.6,30.3,27.1,27.4,26.4,25.6,25.7,24.9,27.9,26.1,26.2,25.6]}",
+      "status": "160 / 168 时段 · 已暂停",
+      "samples": 20,
+      "advanceP95": 30,
+      "personP95": 30.6,
+      "zoomP95": 29
+    },
+    "layout": {
+      "widths": [
+        375,
+        1280
+      ],
+      "horizontalOverflow": false,
+      "eventCount": 4903,
+      "storyCount": 243,
+      "eventRows": 100,
+      "storyCards": 6,
+      "closedStoryBodies": 0,
+      "consoleErrors": 0
+    }
+  },
+  "defaultTests": {
+    "success": true,
+    "count": 167,
+    "elapsedMs": 29763
+  },
+  "fullVerification": {
+    "passed": true,
+    "tests": 361,
+    "testSeconds": 75.83,
+    "verifySeconds": 91.76,
+    "academicSeeds": 30,
+    "livingSeedPairs": 30,
+    "firstWeekSeeds": 100
+  }
+}

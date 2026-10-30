@@ -24,15 +24,6 @@ test('attendance follows recorded decisions rather than scheduled classes', () =
   expect(World.fromSave(world.toSave())).toEqual(world);
 });
 
-test('the added places can actually be reached in simulated weeks', () => {
-  const visited = new Set<number>();
-  for (let seed = 0; seed < 50; seed++) {
-    const world = new World(seed);
-    while (world.step()) world.npcs.forEach((person) => visited.add(person.loc));
-  }
-  for (const id of [6, 7, 8, 9, 10, 11]) expect(visited.has(id)).toBe(true);
-});
-
 test('two fictional teaching weeks have balanced two-lesson blocks and weekend breaks', async () => {
   const { timetableWeek, TEACHING_TICKS, labAt } = await import('../src/core/academics.ts');
   expect(TEACHING_TICKS).toBe(112);

@@ -1,8 +1,13 @@
 import fs from "node:fs";
+import assert from 'node:assert/strict';
 import { evaluateSeeds } from "../src/core/evaluation.ts";
 import { ENGINE_VERSION } from "../src/core/config.ts";
 const seedCount = Number(process.argv[2] || 100);
 const metrics = evaluateSeeds(seedCount);
+if (seedCount === 100) {
+  const reference = JSON.parse(fs.readFileSync(new URL('../tests/fixtures/v016-behavior.json', import.meta.url), 'utf8'));
+  assert.deepEqual(metrics, reference.evaluation, 'First-week behaviour changed from the original v0.16 reference.');
+}
 const report = {
   engineVersion: ENGINE_VERSION,
   scenario: "first teaching week, quality-N seeds; one open day at tick 2 vs no intervention",

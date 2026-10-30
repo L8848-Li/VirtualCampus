@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from "vue";
+import { eventsDuring } from './core/eventIndex.ts';
 import { createSimulation } from "./controller/simulation.ts";
 import { places } from "./core/config.ts";
 import { springCampusDay } from "./core/calendar.ts";
@@ -47,7 +48,7 @@ function switchPage(name: "campus" | "stories" | "academics") {
 }
 const todayEvents = computed(() => {
   const currentDay = Math.floor(Math.max(0, world.value.tick - 1) / 4);
-  return world.value.events.filter((event) => Math.floor(event.tick / 4) === currentDay && event.tick < world.value.tick && event.importance >= 3).slice(-8).reverse();
+  return eventsDuring(world.value.events, currentDay * 4, Math.min(currentDay * 4 + 4, world.value.tick)).filter(event => event.importance >= 3).slice(-8).reverse();
 });
 const selectedPlace = ref<LocationId | null>(null);
 const sideView = ref<"overview" | "place" | "person">("overview");
@@ -96,6 +97,7 @@ onUnmounted(() => { window.removeEventListener("keydown", closeToolsOnEscape); s
           <label><input v-model="livingEnabled" type="checkbox" /> 新建世界启用预算、兼职与压力实验（默认关闭）</label>
           <div class="settings-buttons"><button @click="sim.reset">新建世界</button><button @click="sim.replay">↺ 重放</button><button @click="sim.exportFile">导出存档</button><button @click="fileInput?.click()">导入存档</button></div>
           <small>{{ saveState }}</small>
+          <p v-if="sim.legacyAvailable.value">已保留 v0.16 存档。新版本需新建世界。<button @click="sim.exportLegacyFile">下载旧版备份</button></p>
         </div>
       </details>
       <input ref="fileInput" type="file" accept=".json,application/json" hidden @change="importFile" />
@@ -185,6 +187,7 @@ onUnmounted(() => { window.removeEventListener("keydown", closeToolsOnEscape); s
       :filter="view.filter"
       :selected="view.selected"
       :watched="view.watched"
+      :focus-id="detailId"
       @event="detailId = $event"
       @filter="
         view.filter = $event;
@@ -222,6 +225,7 @@ onUnmounted(() => { window.removeEventListener("keydown", closeToolsOnEscape); s
     :event="selectedEvent"
     :help="helpOpen"
     :world="world"
+    :scores="sim.actionScores.value"
     @close="
       detailId = null;
       helpOpen = false;

@@ -1,25 +1,3 @@
-import { World } from '../src/engine.ts';
-import { writeFileSync } from 'node:fs';
-import { ENGINE_VERSION as wVersion } from '../src/core/config.ts';
-const results: { seed: string; enrollments: { owner: number; courses: string[] }[]; clubPeople: { id: number; rest: number; clubActions: number }[]; club: { memberships: number; proposed: number; held: number; cancelled: number; meetings: number; missedMeetings: number }; people: { id: number; name: string; researchWork: number; rest: number; crisis: number }[]; completed: number; expired: number; failures: number; missed: number; replay: boolean }[] = [];
-for (let i = 0; i < 30; i++) {
-  const w = new World(`research-quality-${i}`);
-  const people = w.npcs.filter(n => n.education === 'graduate').map(n => ({ id: n.id, name: n.name, researchWork: 0, rest: 0, crisis: 0 }));
-  const clubPeople = w.npcs.map(n => ({ id: n.id, rest: 0, clubActions: 0 }));
-  while (w.tick < 168) {
-    const eventStart = w.events.length;
-    w.step();
-    const events = w.events.slice(eventStart);
-    for (const m of clubPeople) { const n = w.npcs[m.id]; if (n.action === '休息') m.rest++; if (n.intent?.kind?.startsWith('club_')) m.clubActions++; }
-    for (const m of people) { const n = w.npcs[m.id]; if (events.some(e => (e.type === 'task_progress' || e.type === 'research_experiment_failed') && e.people.includes(m.id) && String(e.data.taskId).startsWith('research-'))) m.researchWork++; if (n.action === '休息') m.rest++; if (n.energy < 10 || n.hunger > 95) m.crisis++; }
-  }
-  results.push({ enrollments: w.enrollments.map(e => ({ owner: e.owner, courses: e.courseIds })), clubPeople, club: { memberships: w.clubs.clubs.reduce((n,c) => n+c.members.length, 0), proposed: w.activities.filter(a => a.clubId).length, held: w.activities.filter(a => a.clubId && a.status === 'held').length, cancelled: w.activities.filter(a => a.clubId && a.status === 'cancelled').length, meetings: w.events.filter(e => e.type === 'club_meeting').length, missedMeetings: w.events.filter(e => e.type === 'club_meeting_cancelled').length }, seed: `research-quality-${i}`, people, completed: w.tasks.filter(t => t.research && t.status === 'completed').length, expired: w.tasks.filter(t => t.research && t.status === 'expired').length, failures: w.events.filter(e => e.type === 'research_experiment_failed').length, missed: w.events.filter(e => e.type === 'research_meeting_missed').length, replay: World.fromSave(w.toSave()).checksum() === w.checksum() });
-}
-const personSteps = 30 * 2 * 168;
-const summary = { seeds: 30, personSteps, crisisRate: results.flatMap(r => r.people).reduce((n,p) => n+p.crisis,0)/personSteps, restRate: results.flatMap(r => r.people).reduce((n,p) => n+p.rest,0)/personSteps, workActions: results.flatMap(r => r.people).reduce((n,p) => n+p.researchWork,0), completed: results.reduce((n,r) => n+r.completed,0), expired: results.reduce((n,r) => n+r.expired,0), experimentFailures: results.reduce((n,r) => n+r.failures,0), missedMeetings: results.reduce((n,r) => n+r.missed,0), replayFailures: results.filter(r => !r.replay).map(r => r.seed) };
-writeFileSync('internal-docs/reports/research-v0.16.0.json', JSON.stringify({engineVersion: wVersion, definition: "30 fixed seeds research-quality-0 through research-quality-29, 168 steps per seed; crisis is energy < 10 or hunger > 95 after each step; work counts actual progress or failure events; replay imports a saved game", baseline: "Unavailable: the initial checkout already contained substantial uncommitted changes, so a matching v0.15.1 reference cannot be reconstructed reliably.", summary,results}, null, 2)+'\n');
-const clubSummary = { seeds: 30, memberships: results.reduce((n,r) => n+r.club.memberships, 0), proposed: results.reduce((n,r) => n+r.club.proposed, 0), held: results.reduce((n,r) => n+r.club.held, 0), cancelled: results.reduce((n,r) => n+r.club.cancelled, 0), meetings: results.reduce((n,r) => n+r.club.meetings, 0), cancelledMeetings: results.reduce((n,r) => n+r.club.missedMeetings, 0), peopleWithoutRest: results.flatMap(r => r.clubPeople.filter(p => !p.rest).map(p => ({ seed: r.seed, id: p.id }))), replayFailures: summary.replayFailures };
-writeFileSync('internal-docs/reports/clubs-v0.16.0.json', JSON.stringify({ engineVersion: wVersion, description: '30 fixed seeds, 168 periods; rest and actual selected club actions by person; held requires actual preparation and presence', summary: clubSummary, results: results.map(r => ({seed: r.seed, people: r.clubPeople, ...r.club})) }, null, 2) + '\n');
-const enrollmentSummary = { seeds: 30, students: results.reduce((n,r) => n+r.enrollments.length, 0), courseCounts: Object.fromEntries(['math', 'programming', 'english', 'physics'].map(id => [id, results.reduce((n,r) => n+r.enrollments.filter(e => e.courses.includes(id)).length, 0)])), fewerThanTwo: results.flatMap(r => r.enrollments.filter(e => e.courses.length < 2).map(e => ({ seed: r.seed, owner: e.owner, courses: e.courses }))), replayFailures: summary.replayFailures };
-writeFileSync('internal-docs/reports/enrollment-v0.16.0.json', JSON.stringify({engineVersion: wVersion, description: '30 fixed seeds; undergraduate enrollment and replay', summary: enrollmentSummary, results: results.map(r => ({seed: r.seed, enrollments: r.enrollments}))}, null, 2)+'\n');
-console.log(JSON.stringify({ research: summary, clubs: clubSummary, enrollment: enrollmentSummary }));
+// Academic observers share the same 30 worlds and write all four reports.
+import { evaluateAcademicSemesters } from './lib/semesterEvaluation.ts';
+console.log(JSON.stringify(evaluateAcademicSemesters()));

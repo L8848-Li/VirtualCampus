@@ -12,8 +12,8 @@ import type {
   ScoredAction,
   Knowledge,
 } from "./types.ts";
-export const clamp = (v: number, low = 0, high = 100) =>
-  Math.max(low, Math.min(high, v));
+import { clamp } from './math.ts';
+export { clamp } from './math.ts';
 // Only the agent's own state, recent observations and public environment enter
 // this policy. It cannot inspect another agent's current position or needs.
 export function chooseAction(

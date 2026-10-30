@@ -41,3 +41,4 @@ const seeds = process.argv.length > 2 ? process.argv.slice(2).map(Number) : [0,1
 for (const seed of seeds) for (let repeat=0; repeat<5; repeat++) run(seed, 'sample', repeat);
 const finalDigest = sourceDigest();
 console.log(JSON.stringify({ phase: 'complete', sourceDigest: finalDigest, sourceUnchanged: finalDigest === initialDigest }));
+console.log(JSON.stringify({ phase: 'resources', maxRssMb: process.resourceUsage().maxRSS / 1024, cpu: process.cpuUsage() }));

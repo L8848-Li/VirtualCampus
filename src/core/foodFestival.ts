@@ -25,7 +25,7 @@ export function foodFestivalOption(person: AgentState, tick: number): ActionOpti
 /** Actual attendees must have chosen the festival and still be at its location
  * after any meal-queue diversion. Merely agreeing, knowing, or passing by does
  * not make someone an attendee. This function does not create relationships. */
-export function foodFestivalAttendees(tick: number, people: AgentState[], events: CampusEvent[]): number[] {
+export function foodFestivalAttendees(tick: number, people: AgentState[], events: readonly CampusEvent[]): number[] {
   if (tick !== foodFestival.tick) return [];
   const chosen = new Set(events.filter((event) => event.tick === tick && event.type === 'action' &&
     event.data.location === foodFestival.location && event.text.includes(`逛${foodFestival.name}`))

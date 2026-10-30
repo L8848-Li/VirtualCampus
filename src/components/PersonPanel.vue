@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { queryEvents } from '../core/eventIndex.ts';
 import { activeDormLoans } from "../core/dorm.ts";
 import { attendance, courseAt, timetableWeek, courses } from "../core/academics.ts";
 import { courseCapacity, coursePeriods, courseTags } from "../core/enrollment.ts";
@@ -32,7 +33,7 @@ const courseIds = computed(() => props.world.enrollments.find(e => e.owner === p
 const classHistory = computed(() => attendance(props.world.events, props.selected, props.world.tick, courseIds.value));
 const nextClass = computed(() => Array.from({ length: 168 - props.world.tick }, (_, i) => props.world.tick + i)
   .map((tick) => ({ tick, course: courseAt(tick, props.selected, courseIds.value) })).find((item) => item.course));
-const lastAction = computed(() => [...props.world.events].reverse().find((event) => event.type === 'action' && event.people[0] === props.selected));
+const lastAction = computed(() => queryEvents(props.world.events, { type: 'action', person: props.selected }).at(-1));
 const relationships = computed(() =>
   n.value.rel
     .map((r, i) => ({ r, i }))

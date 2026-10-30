@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { queryEvents } from '../core/eventIndex.ts';
 import type { WorldSnapshot } from "../core/types.ts";
 const props = defineProps<{ world: WorldSnapshot }>();
 defineEmits<{ event: [id: number] }>();
 const summaries = computed(() =>
-  props.world.events
-    .filter((e) => e.type === "summary")
+  queryEvents(props.world.events, { type: 'summary' })
     .slice()
     .reverse(),
 );

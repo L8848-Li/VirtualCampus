@@ -9,9 +9,8 @@ Node.js 22.12+（建议 24 LTS）。首次执行 npm ci 安装锁定的依赖。
 ```sh
 npm ci
 npm run dev
-npm run check
 npm test
-npm run build
+npm run verify
 ```
 
 提交前请运行检查和模拟测试；界面改动请附实际运行截图。修复模拟问题时附 seed、时段、干预顺序与导出记录。不要上传个人路径、密钥、真实同学资料或本地存档。
@@ -24,5 +23,7 @@ npm run build
 - NPC 只能使用自己的记忆与可感知信息，玩家可观察完整日志。
 - 模拟规则变化时补充行为测试，说明重放兼容性的影响。
 - 保留无需大模型 API 密钥可玩的路径；生成对白只做可选叙事层。
+
+大范围重构需保持 `tests/fixtures/v016-behavior.json` 的行为对照；不要自动重写参考数据。存档校验格式或评分编码变化时，说明版本影响。架构和测量方法见 `docs/ARCHITECTURE.md`、`docs/PERFORMANCE.md`。
 
 目前仍是实验性原型，尚未承诺跨版本存档兼容。先通过 Issue 讨论大范围规则或技术栈变动。

@@ -7,6 +7,17 @@
   --bg: #f0f3e9;
   --pink: #bf8198;
 }
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  padding: 1rem 0.5rem;
+  font-size: 0.8rem;
+}
+.pagination button { padding: 0.4rem 0.7rem; }
+.pagination span { font-variant-numeric: tabular-nums; }
 * {
   box-sizing: border-box;
 }
@@ -1933,3 +1944,31 @@ body { background: #eeeee5; color: #34473d; }
 .calendar-phases { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
 .calendar-phases span { padding: 8px 10px; background: #f0f3e9; border-radius: 7px; font-size: 11px; color: #748775; }
 .calendar-phases span.current { background: #dceada; color: #355f47; font-weight: 600; }
+
+/* The observation navigation also needs to fit the narrow in-app browser. */
+@media (max-width: 950px) {
+  .desktop-header { height: auto; min-height: 64px; padding: 12px 16px; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .desktop-header .brand { min-width: 140px; }
+  .header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .header-actions > .text-button { padding: 6px; }
+  .top-navigation { display: flex; flex: 1 0 100%; order: 3; gap: 8px; }
+  .top-navigation button { flex: 1; white-space: nowrap; padding: 8px 4px; }
+  .top-navigation button.active { background: #e4eddf; border-color: #8ba386; }
+  .world-settings[open] .world-tools { position: absolute; top: calc(100% + 8px); right: 0; z-index: 50; display: block; width: min(290px, calc(100vw - 32px)); padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); box-shadow: 0 10px 30px #2e44352b; }
+  .world-settings .world-tools label { display: grid; gap: 6px; text-align: left; }
+  .world-settings .world-tools input:not([type='checkbox']) { width: 100%; min-width: 0; }
+  .settings-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 10px 0; }
+  .world-status { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; padding: 12px 16px; background: var(--paper); border-bottom: 1px solid var(--line); }
+  .status-location { grid-column: 1 / -1; }
+  .status-location small, .status-time span, .status-time strong, .status-next span, .status-next small { display: block; }
+  .status-location small, .status-time span, .status-next small { color: var(--muted); font-size: 11px; margin-top: 3px; }
+  .status-playback { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+  .status-playback button { flex: 1; white-space: nowrap; }
+  .context-column { position: static; }
+  .bottom-bar { display: grid; gap: 10px; padding: 14px 16px; border-top: 1px solid var(--line); background: var(--paper); }
+  .bottom-location { display: flex; gap: 10px; align-items: center; }
+  .bottom-location small { display: block; color: var(--muted); }
+  .bottom-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+  .bottom-tools button { padding: 7px; }
+  .bottom-version { color: var(--muted); font-size: 11px; }
+}

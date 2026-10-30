@@ -1,12 +1,7 @@
-import { courses } from './academics.ts';
+import { courses, coursePeriods, courseCapacity } from './courseCatalog.ts';
+export { coursePeriods, courseCapacity, courseTags } from './courseCatalog.ts';
 import type { World } from '../engine.ts';
 
-/** Fictional public weekly periods; each entry is a day * 4 + slot. */
-export const coursePeriods: Record<string, readonly number[]> = {
-  math: [0, 8, 16], programming: [4, 12, 6, 14], english: [2, 14], physics: [6, 18],
-};
-export const courseCapacity: Record<string, number> = { math: 10, programming: 5, english: 8, physics: 8 };
-export const courseTags: Record<string, string> = { math: "数学、逻辑", programming: "编程、机器人", english: "语言、阅读", physics: "科学、实验" };
 export interface Enrollment { owner: number; courseIds: string[]; events: number[] }
 
 /** Selection takes place before the first class. Only each student's interests,

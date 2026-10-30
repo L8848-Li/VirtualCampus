@@ -1,4 +1,5 @@
 import type { Belief, CampusEvent, WorldSnapshot } from "./types.ts";
+import { queryEvents } from './eventIndex.ts';
 
 export interface StoryCard {
   id: string;
@@ -16,7 +17,7 @@ export interface StoryCard {
   dueTick?: number;
 }
 
-type StoryWorld = Pick<WorldSnapshot, "tick" | "npcs" | "events" | "tasks" | "activities">;
+type StoryWorld = Pick<WorldSnapshot, "tick" | "npcs" | "tasks" | "activities"> & { events: readonly CampusEvent[] };
 const opinionTypes = new Set(["misunderstanding", "belief_formed", "belief_revised", "repair"]);
 const outcomeTypes = new Set(["task_completed", "task_expired", "plan_fulfilled", "plan_cancelled", "plan_expired", "activity_held", "activity_cancelled"]);
 
@@ -40,7 +41,7 @@ export function buildStories(world: StoryWorld): StoryCard[] {
         : `${world.npcs[Math.min(n.id, belief.subject)].name}与${world.npcs[Math.max(n.id, belief.subject)].name}，那些没说清的话`, [n.id, belief.subject]);
     for (const id of [belief.sourceEvent, ...belief.evidence]) g.ids.add(id);
   }
-  for (const event of world.events) {
+  for (const event of queryEvents(world.events, { linked: true })) {
     const { planId, taskId, activityId, beliefId } = event.data;
     const key = activityId || taskId || (planId?.startsWith("meal-") ? planId : undefined) || (beliefId ? beliefKeys.get(beliefId) : undefined);
     if (!key) continue;

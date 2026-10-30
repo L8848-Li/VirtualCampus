@@ -1,4 +1,5 @@
 import type { World } from '../engine.ts';
+import { queryEvents } from './eventIndex.ts';
 import type { LibraryState } from './types.ts';
 
 export function createLibrary(): LibraryState {
@@ -45,7 +46,7 @@ export function resolveLibrary(world: World) {
       const homework = world.homework.find((item) => item.id === n.intent!.homeworkId && item.owner === n.id && item.status === 'open');
       // Only the owner's own actual visit can produce a print; don't print the
       // same assignment repeatedly or treat printed pages as completed work.
-      const alreadyPrinted = homework && world.events.some((event) => event.type === 'library_print' && event.people[0] === n.id && event.data.homeworkId === homework.id);
+      const alreadyPrinted = homework && queryEvents(world.events, { type: 'library_print', person: n.id }).some(event => event.people[0] === n.id && event.data.homeworkId === homework.id);
       if (homework && !alreadyPrinted && world.sample('library-print', homework.id, n.id) < 0.45) {
         const pages = 2 + Math.floor(world.sample('library-print-pages', homework.id, n.id) * 5);
         const minutes = 2 + Math.floor(world.sample('library-print-wait', world.tick, n.id) * 7);

@@ -144,8 +144,8 @@ export const profiles: Profile[] = [
   { name: "叶宁", role: "研究生 · 智能系统研究者", education: "graduate", interest: "机器人制作", quirk: "实验前会反复检查记录", goal: "完成科研课题", home: 18, habit: 2, ext: 0.58, sensitive: 0.4, ambition: 0.82, color: "#9b806e", glyph: "✳" },
 ];
 
-export const ENGINE_VERSION = "0.16.0";
-export const SCHEMA_VERSION = 3;
+export const ENGINE_VERSION = "0.17.0";
+export const SCHEMA_VERSION = 4;
 export const TOTAL_TICKS = 168;
 export const MAX_INPUTS = 256;
 export const names = profiles.map((p) => p.name);

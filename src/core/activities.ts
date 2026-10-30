@@ -2,7 +2,7 @@ import { isPrivateDorm } from "./campusLife.ts";
 import type { World } from "../engine.ts";
 import type { AgentState, CampusActivity, LocationId } from "./types.ts";
 import { invitationDecision } from "./invitations.ts";
-import { clamp } from "./decision.ts";
+import { clamp } from "./math.ts";
 import { isClubMember } from "./clubs.ts";
 import { places } from "./config.ts";
 

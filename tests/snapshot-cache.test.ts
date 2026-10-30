@@ -39,7 +39,7 @@ test('a published event and nested details cannot corrupt later snapshots or the
   const first = capture(world);
   const action = first.events.find((event) => event.type === 'action')!;
   const originalText = action.text;
-  const score = action.data.scores![0];
+  const score = world.getActionScores(action.id)![0];
   const originalScore = score.total;
   const originalSave = world.toSave();
   expect(Reflect.set(action, 'text', '篡改')).toBe(false);
@@ -48,7 +48,8 @@ test('a published event and nested details cannot corrupt later snapshots or the
   first.events.pop(); // The containing snapshot array is independently owned.
   const next = capture(world);
   expect(next.events[action.id - 1].text).toBe(originalText);
-  expect(next.events[action.id - 1].data.scores![0].total).toBe(originalScore);
+  expect(world.getActionScores(action.id)![0].total).toBe(originalScore);
+  expect(next.events[action.id - 1]).toBe(action);
   expect(world.toSave()).toEqual(originalSave);
   expect(World.fromSave(originalSave)).toEqual(world);
 });

@@ -1,14 +1,9 @@
-import { coursePeriods } from './enrollment.ts';
+import { coursePeriods, courses } from './courseCatalog.ts';
+export { courses } from './courseCatalog.ts';
 import { profiles } from './config.ts';
+import { queryEvents } from './eventIndex.ts';
 import type { ActionOption, CampusActivity, CampusEvent } from './types.ts';
 
-// Each teaching period represents a two-lesson block; names and timetable are fictional.
-export const courses = [
-  { id: 'math', name: '高等数学（模拟课程）', credits: 4, days: [0, 2, 4] },
-  { id: 'programming', name: '程序设计基础（模拟课程）', credits: 3, days: [1, 3] },
-  { id: 'english', name: '大学英语（模拟课程）', credits: 2, days: [0, 3] },
-  { id: 'physics', name: '大学物理（模拟课程）', credits: 3, days: [1, 4] },
-] as const;
 export const TEACHING_TICKS = 112;
 
 // Location alone is not evidence of study: someone may visit a classroom or
@@ -42,8 +37,8 @@ export function courseAt(tick: number, person?: number, courseIds?: string[]) {
   if (day === 3) return programming ? courses[1] : courses[3];
   return courses[3];
 }
-export function attendance(events: CampusEvent[], person: number, tick: number, courseIds?: string[]) {
-  const attended = new Map(events.filter((event) => event.type === 'action' && event.people[0] === person && event.data.courseId).map((event) => [`${event.tick}:${event.data.courseId}`, Number(event.data.lateMinutes || 0)]));
+export function attendance(events: readonly CampusEvent[], person: number, tick: number, courseIds?: string[]) {
+  const attended = new Map(queryEvents(events, { type: 'action', person }).filter(event => event.people[0] === person && event.data.courseId).map(event => [`${event.tick}:${event.data.courseId}`, Number(event.data.lateMinutes || 0)]));
   return Array.from({ length: Math.min(tick, TEACHING_TICKS) }, (_, t) => ({ tick: t, course: courseAt(t, person, courseIds) }))
     .filter((item) => item.course)
     .map((item) => ({ ...item, attended: attended.has(`${item.tick}:${item.course?.id}`), lateMinutes: attended.get(`${item.tick}:${item.course?.id}`) || 0 }));

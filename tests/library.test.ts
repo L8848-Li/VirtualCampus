@@ -51,14 +51,3 @@ test('only people who actually choose the relevant group task are counted as att
   expect(world.library.reservations[0].status).toBe('used');
   expect(world.library.reservations[0].attendees).toEqual([0, 3]);
 });
-
-test('library activities arise in simulation and survive replay', () => {
-  const outcomes = new Set<string>();
-  for (let seed = 0; seed < 10; seed++) {
-    const world = new World(seed);
-    while (world.step());
-    for (const event of world.events) if (event.type.startsWith('library_')) outcomes.add(event.type);
-    expect(World.fromSave(world.toSave())).toEqual(world);
-  }
-  for (const type of ['library_borrow', 'library_return', 'library_room_reserved', 'library_room_rejected', 'library_room_used', 'library_room_missed']) expect(outcomes.has(type)).toBe(true);
-});

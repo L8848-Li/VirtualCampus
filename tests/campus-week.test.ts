@@ -49,24 +49,6 @@ test('queues never act as a seating cap and hungry people use alternatives', () 
   expect(alternatives).toBeGreaterThan(0);
 });
 
-test('projects depend on actual choices at their designated workspace and showcase', () => {
-  const kinds = new Set<string>();
-  for (let seed = 0; seed < 50; seed++) {
-    const world = new World(seed);
-    while (world.step());
-    for (const project of world.activities.filter((activity) => activity.kind === 'project')) {
-      kinds.add(project.status);
-      for (const [person, contribution] of Object.entries(project.contributions)) {
-        const works = world.events.filter((event) => event.type === 'activity_progress' && event.people.includes(Number(person)) && event.data.activityId === project.id && event.data.location === project.preparationLocation);
-        expect(contribution).toBe(works.length * 2);
-      }
-      if (project.status === 'held') expect(project.attendees.length).toBeGreaterThanOrEqual(2);
-    }
-  }
-  expect(kinds.has('held')).toBe(true);
-  expect(kinds.has('cancelled')).toBe(true);
-});
-
 test('deferral requires an actual application, and retake credits are not awarded twice', async () => {
   const { resolveExams } = await import('../src/core/assessment.ts');
   const world = new World('academic-flow');

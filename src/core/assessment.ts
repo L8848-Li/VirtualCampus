@@ -3,6 +3,7 @@ import type { Assessment, AgentState } from './types.ts';
 import { courses, attendance, TEACHING_TICKS } from './academics.ts';
 import type { Enrollment } from './enrollment.ts';
 import { profiles } from './config.ts';
+import { queryEvents } from './eventIndex.ts';
 
 // A compact four-week scenario. All course weights and timing are fictional.
 export function createAssessments(enrollments?: Enrollment[]): Assessment[] {
@@ -22,7 +23,7 @@ function calculate(world: World, person: AgentState, record: Assessment, attempt
   const classRatio = history.length ? history.reduce((total, entry) => total + (entry.attended ? (entry.lateMinutes ? 0.8 : 1) : 0), 0) / history.length : 0;
   const homework = world.homework.filter((item) => item.owner === person.id && item.courseId === record.courseId);
   const homeworkRatio = homework.length ? homework.reduce((total, item) => total + item.progress / item.required, 0) / homework.length : 0;
-  const lab = world.events.filter((event) => event.type === 'action' && event.people[0] === person.id && event.data.labCourseId === record.courseId).length;
+  const lab = queryEvents(world.events, { type: 'action', person: person.id }).filter(event => event.people[0] === person.id && event.data.labCourseId === record.courseId).length;
   const process = attempt === 'retake' ? Math.min(100, record.retakeWork * 35) : record.courseId === 'math' ? Math.round(60 * classRatio + 40 * homeworkRatio)
     : record.courseId === 'programming' ? Math.round(60 * classRatio + 40 * Math.min(4, lab) / 4) : Math.round(100 * classRatio);
   const exam = Math.max(0, Math.min(100, Math.round(20 + person.ambition * 40 + person.energy * 0.2 + world.sample('exam', person.id, record.courseId, attempt) * 30)));

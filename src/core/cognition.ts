@@ -1,7 +1,7 @@
 import type { World } from "../engine.ts";
 import { isPrivateDorm } from "./campusLife.ts";
 import type { AgentPlan, AgentState, Belief } from "./types.ts";
-import { clamp } from "./decision.ts";
+import { clamp } from "./math.ts";
 
 export function noteAbsence(world: World, observer: AgentState, plan: AgentPlan, source: number) {
   if (plan.target === undefined || observer.beliefs.some((b) => b.planId === plan.id)) return;

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { queryEvents } from '../core/eventIndex.ts';
 import type { WorldSnapshot } from '../core/types.ts';
 import { profiles } from '../core/config.ts';
 import { clock } from '../ui/format.ts';
@@ -8,7 +9,7 @@ const props = defineProps<{ world: WorldSnapshot }>();
 defineEmits<{ select: [id: number]; event: [id: number] }>();
 const currentTick = computed(() => props.world.tick - 1);
 const room = computed(() => props.world.library.reservations.find((entry) => entry.dueTick === currentTick.value && entry.status === 'used'));
-const printing = computed(() => props.world.events.filter((event) => event.tick === currentTick.value && event.type === 'library_print'));
+const printing = computed(() => queryEvents(props.world.events, { tick: currentTick.value, type: 'library_print' }));
 const groups = computed(() => {
   const people = props.world.npcs.filter((person) => person.loc === 3);
   return [

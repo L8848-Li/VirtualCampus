@@ -3,7 +3,8 @@ import { World, TOTAL_TICKS, MAX_INPUTS } from "../engine.ts";
 import { createSnapshotCapture } from "./snapshot.ts";
 import type { WorldSnapshot, ViewState, SaveData } from "../core/types.ts";
 const STORAGE_KEY = import.meta.env.DEV && new URLSearchParams(location.search).has("perf")
-  ? "virtualcampus.performance-test.v16.0" : "virtualcampus.save.v16.0";
+  ? "virtualcampus.performance-test.v17.0" : "virtualcampus.save.v17.0";
+const LEGACY_KEY = 'virtualcampus.save.v16.0';
 export function createSimulation() {
   let world = new World();
   const isId = (id: unknown): id is number =>
@@ -15,6 +16,7 @@ export function createSimulation() {
   const captureWorld = createSnapshotCapture();
   const capture = (): WorldSnapshot => captureWorld(world);
   const snapshot = shallowRef(capture());
+  const legacyAvailable = ref(false);
   const view = reactive<ViewState>({
     selected: 0,
     watched: [],
@@ -30,6 +32,18 @@ export function createSimulation() {
   const saveState = ref("本机自动保存"),
     detailId = ref<number | null>(null),
     helpOpen = ref(false);
+  let scoreWorld: World | undefined, scoreId: number | null = null;
+  let scoreTable: ReturnType<World['getActionScores']>;
+  const actionScores = computed(() => {
+    // A publication can replace the world while reusing an event ID.
+    snapshot.value;
+    const id = detailId.value;
+    if (id === null) { scoreWorld = undefined; scoreId = null; scoreTable = undefined; }
+    else if (scoreWorld !== world || scoreId !== id) {
+      scoreWorld = world; scoreId = id; scoreTable = world.getActionScores(id);
+    }
+    return scoreTable;
+  });
   function loadView(input: unknown) {
     if (!input || typeof input !== "object") return;
     const v = input as Partial<ViewState>;
@@ -145,17 +159,28 @@ export function createSimulation() {
   }
   function exportFile() {
     savedWorld ??= world.toSave();
+    download(JSON.stringify({ world: savedWorld, view }, null, 2), `campus-${world.version}-day${Math.min(42, Math.floor(world.tick / 4) + 1)}.json`);
+    notice.value = "已导出带版本与校验信息的可重放存档。";
+  }
+  function download(text: string, filename: string) {
     const url = URL.createObjectURL(
-      new Blob([JSON.stringify({ world: savedWorld, view }, null, 2)], {
+      new Blob([text], {
         type: "application/json",
       }),
     );
     const a = document.createElement("a");
     a.href = url;
-    a.download = `campus-${world.version}-day${Math.min(42, Math.floor(world.tick / 4) + 1)}.json`;
+    a.download = filename;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    notice.value = "已导出带版本与校验信息的可重放存档。";
+  }
+  function exportLegacyFile() {
+    try {
+      const text = localStorage.getItem(LEGACY_KEY);
+      if (!text) throw new Error('旧版存档不可用');
+      download(text, 'campus-0.16.0-backup.json');
+      notice.value = '已下载 v0.16 存档备份；请使用旧版本打开，新版本需新建世界。';
+    } catch { notice.value = '旧版存档备份失败，请检查浏览器存储权限。'; }
   }
   async function importFile(file: File) {
     try {
@@ -175,6 +200,7 @@ export function createSimulation() {
     }
   }
   try {
+    legacyAvailable.value = !STORAGE_KEY.includes('performance-test') && localStorage.getItem(LEGACY_KEY) !== null;
     const text = localStorage.getItem(STORAGE_KEY);
     if (text) {
       const payload = JSON.parse(text);
@@ -205,6 +231,8 @@ export function createSimulation() {
     saveState,
     detailId,
     helpOpen,
+    actionScores,
+    legacyAvailable,
     selected,
     done,
     canIntervene,
@@ -220,6 +248,7 @@ export function createSimulation() {
     setDirection,
     persist,
     exportFile,
+    exportLegacyFile,
     importFile,
     stop,
   };

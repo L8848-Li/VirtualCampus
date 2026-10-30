@@ -1,0 +1,75 @@
+
+> virtual-campus@0.17.0 verify
+> npm run check && npm run test:full && npm run evaluate && npm run evaluate:semester && npm run build:bundle
+
+
+> virtual-campus@0.17.0 check
+> vue-tsc --noEmit
+
+
+> virtual-campus@0.17.0 test:full
+> node scripts/test-full-replay.mjs --all
+
+Full replay: 100 seeds (0–99), every tick, living off/on, with rooms/groups/party interventions and checkpoint restoration.
+
+ RUN  v5.0.5 <project-root>
+
+
+ Test Files  41 passed (41)
+      Tests  361 passed (361)
+   Start at  21:56:12
+   Duration  75.83s (tests 99%, import 1%)
+
+Full replay elapsed: 76.0 s
+
+> virtual-campus@0.17.0 evaluate
+> node --experimental-strip-types scripts/evaluate.ts
+
+┌──────────────────────────────┬────────┐
+│ (index)                      │ Values │
+├──────────────────────────────┼────────┤
+│ seeds                        │ 100    │
+│ actions                      │ 33600  │
+│ activityDiversity            │ 14.143 │
+│ fourStepRepeatRate           │ 0      │
+│ crisisRate                   │ 0.013  │
+│ invitationAcceptanceRate     │ 0.88   │
+│ misunderstandingRate         │ 0.04   │
+│ plansAgreed                  │ 1893   │
+│ plansNotDue                  │ 234    │
+│ plansFulfilled               │ 795    │
+│ planFulfillmentRate          │ 0.479  │
+│ taskCompletionRate           │ 0.694  │
+│ interventionChangedWorldRate │ 1      │
+│ beliefsFormed                │ 529    │
+│ beliefsRevised               │ 157    │
+│ beliefRevisionRate           │ 0.297  │
+│ beliefSourceErrors           │ 0      │
+│ activitiesProposed           │ 126    │
+│ activitiesHeld               │ 73     │
+│ activitiesCancelled          │ 27     │
+│ activityFulfillmentRate      │ 0.579  │
+└──────────────────────────────┴────────┘
+Saved internal-docs/reports/behavior-v0.17.0.json
+
+> virtual-campus@0.17.0 evaluate:semester
+> node --experimental-strip-types scripts/evaluate-semester.ts
+
+{"academic":{"research":{"seeds":30,"personSteps":10080,"crisisRate":0.02619047619047619,"restRate":0.25595238095238093,"workActions":471,"completed":89,"expired":151,"experimentFailures":70,"missedMeetings":135,"replayFailures":[]},"clubs":{"seeds":30,"memberships":180,"proposed":16,"held":9,"cancelled":7,"meetings":65,"cancelledMeetings":295,"peopleWithoutRest":[],"replayFailures":[]},"enrollment":{"seeds":30,"students":300,"courseCounts":{"math":259,"programming":117,"english":158,"physics":151},"fewerThanTwo":[],"replayFailures":[]},"distribution":{"classPeriods":{"min":6,"max":27,"mean":15.2},"labPeriods":{"min":0,"max":4,"mean":0.30333333333333334},"homeworkPeriods":{"min":0,"max":6,"mean":0.9966666666666667},"reportPeriods":{"min":0,"max":14,"mean":2.72},"examsAttended":{"min":0,"max":6,"mean":2.466666666666667},"restPeriods":{"min":40,"max":46,"mean":42.846666666666664},"crises":{"min":0,"max":12,"mean":2.756666666666667},"seeds":30,"students":300,"capacityViolations":[],"noTimetable":0,"fewerThanTwoCourses":0,"replayFailures":[]}},"living":[{"enabled":false,"seeds":30,"crisisRate":0.019593253968253968,"restRate":0.26216931216931216,"jobs":0,"paidMeals":0,"freeMeals":0,"support":0,"completedTasks":190,"social":16775,"minBalance":null,"maxStress":null,"highStressSteps":0,"finalHighStress":0,"maxHighStreak":0,"replayFailures":[]},{"enabled":true,"seeds":30,"crisisRate":0.014351851851851852,"restRate":0.26541005291005293,"jobs":332,"paidMeals":7335,"freeMeals":7867,"support":0,"completedTasks":205,"social":17093,"minBalance":0,"maxStress":43,"highStressSteps":0,"finalHighStress":0,"maxHighStreak":0,"replayFailures":[]}],"elapsedMs":11796}
+
+> virtual-campus@0.17.0 build:bundle
+> vite build
+
+vite v8.3.5 building client environment for production...
+transforming...
+✓ 75 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.51 kB │ gzip:  0.37 kB
+dist/assets/index-BNpvn5ii.css   40.87 kB │ gzip:  9.12 kB
+dist/assets/index-BI30LoZC.js   244.31 kB │ gzip: 88.78 kB
+
+✓ built in 131ms
+real 91.76
+user 112.21
+sys 1.39

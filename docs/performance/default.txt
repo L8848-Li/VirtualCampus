@@ -1,0 +1,8 @@
+
+> virtual-campus@0.17.0 test
+> vitest run --reporter=json --outputFile=<temporary-report>/default-final.json
+
+JSON report written to <temporary-report>/default-final.json
+real 29.98
+user 43.72
+sys 0.58

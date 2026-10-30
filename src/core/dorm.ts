@@ -2,6 +2,7 @@ import { isPrivateDorm } from './campusLife.ts';
 import { isOnCampus } from './holiday.ts';
 import type { World } from '../engine.ts';
 import type { AgentState, CampusEvent, EventType } from './types.ts';
+import { queryEvents } from './eventIndex.ts';
 
 // Objects are intentionally small, fictional personal belongings. A transfer
 // exists only when both people meet and the owner agrees.
@@ -43,9 +44,9 @@ function discussRoutine(world: World, sample: (purpose: string, ...keys: (string
   }
 }
 
-export function activeDormLoans(events: CampusEvent[]) {
-  const returned = new Set(events.filter((event) => event.type === type('dorm_return')).map((event) => event.data.loanEvent));
-  return events.filter((event) => event.type === type('dorm_borrow') && !returned.has(event.id));
+export function activeDormLoans(events: readonly CampusEvent[]) {
+  const returned = new Set(queryEvents(events, { type: 'dorm_return' }).map(event => event.data.loanEvent));
+  return queryEvents(events, { type: 'dorm_borrow' }).filter(event => !returned.has(event.id));
 }
 
 export function resolveDorm(world: World, sample = (purpose: string, ...keys: (string | number)[]) => world.sample(purpose, ...keys)) {
